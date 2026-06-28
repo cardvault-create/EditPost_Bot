@@ -13,27 +13,56 @@ WAITING_FOR_TEXT = 2
 
 user_data = {}
 
+# ✨ PREMIUM EMOJIS
+EMOJI = {
+    'crown': '👑',
+    'sparkle': '✨',
+    'star': '⭐',
+    'fire': '🔥',
+    'diamond': '💎',
+    'rocket': '🚀',
+    'photo': '📸',
+    'file': '📄',
+    'check': '✅',
+    'cross': '❌',
+    'back': '🔙',
+    'home': '🏠',
+    'help': 'ℹ️',
+    'send': '📤',
+    'text': '💬',
+    'heart': '❤️',
+}
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start with buttons"""
+    """PREMIUM START WITH BUTTONS"""
+    
+    # Premium welcome text
+    welcome_text = (
+        f"{EMOJI['crown']} **WELCOME TO PREMIUM BOT** {EMOJI['crown']}\n"
+        f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+        f"{EMOJI['fire']} *Photo ya File bhejo, Text add karo!*\n"
+        f"{EMOJI['diamond']} *Bold, Italic, Underline sab support!*\n"
+        f"{EMOJI['star']} *Premium Quality Service!*\n\n"
+        f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+        f"{EMOJI['rocket']} *SELECT OPTION:*"
+    )
+    
+    # Premium colorful buttons
     keyboard = [
-        [InlineKeyboardButton("📸 Photo + Text", callback_data="photo")],
-        [InlineKeyboardButton("📄 File + Text", callback_data="file")],
-        [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
+        [InlineKeyboardButton(f"{EMOJI['photo']} 📸 PHOTO + TEXT 📸 {EMOJI['photo']}", callback_data="photo")],
+        [InlineKeyboardButton(f"{EMOJI['file']} 📄 FILE + TEXT 📄 {EMOJI['file']}", callback_data="file")],
+        [InlineKeyboardButton(f"{EMOJI['help']} ℹ️ HELP ℹ️ {EMOJI['help']}", callback_data="help")],
+        [InlineKeyboardButton(f"{EMOJI['heart']} ❤️ PREMIUM INFO ❤️ {EMOJI['heart']}", callback_data="premium")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        "👋 *WELCOME!*\n\n"
-        "Photo ya File bhejo, phir text add karo!\n"
-        "Bold, Italic, Underline sab support hai!\n\n"
-        "👇 Button click karo ya command use karo:\n"
-        "/photo - Photo + Text\n"
-        "/file - File + Text",
+        welcome_text,
         reply_markup=reply_markup
     )
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Button clicks handle karo"""
+    """PREMIUM BUTTON HANDLER"""
     query = update.callback_query
     await query.answer()
     
@@ -41,90 +70,169 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if query.data == "photo":
         user_data[user_id] = {'type': 'photo'}
-        await query.edit_message_text("📸 *Photo bhejo!*")
+        
+        text = (
+            f"{EMOJI['photo']} **PHOTO MODE ACTIVATED** {EMOJI['photo']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['star']} *Pehle Photo bhejo!*\n"
+            f"{EMOJI['fire']} *Phir Text add karenge!*"
+        )
+        
+        keyboard = [[InlineKeyboardButton(f"{EMOJI['back']} 🔙 BACK {EMOJI['back']}", callback_data="back")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
         return WAITING_FOR_MEDIA
     
     elif query.data == "file":
         user_data[user_id] = {'type': 'file'}
-        await query.edit_message_text("📄 *File bhejo!*")
+        
+        text = (
+            f"{EMOJI['file']} **FILE MODE ACTIVATED** {EMOJI['file']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['star']} *Pehle File bhejo!*\n"
+            f"{EMOJI['fire']} *Phir Text add karenge!*"
+        )
+        
+        keyboard = [[InlineKeyboardButton(f"{EMOJI['back']} 🔙 BACK {EMOJI['back']}", callback_data="back")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
         return WAITING_FOR_MEDIA
     
     elif query.data == "help":
-        await query.edit_message_text(
-            "📝 *HELP*\n\n"
-            "1. Photo ya File button click karo\n"
-            "2. Media bhejo\n"
-            "3. Text bhejo (formatting ke saath)\n"
-            "4. Done!\n\n"
-            "Commands:\n"
-            "/start - Start\n"
-            "/photo - Photo mode\n"
-            "/file - File mode"
+        text = (
+            f"{EMOJI['help']} **PREMIUM HELP** {EMOJI['help']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['star']} **Kaise Use Karein:**\n"
+            f"{EMOJI['diamond']} 1. *Photo ya File button click karo*\n"
+            f"{EMOJI['diamond']} 2. *Media bhejo (Photo/File)*\n"
+            f"{EMOJI['diamond']} 3. *Text bhejo formatting ke saath*\n"
+            f"{EMOJI['diamond']} 4. *Done! Premium delivery!*\n\n"
+            f"{EMOJI['fire']} **Features:**\n"
+            f"{EMOJI['check']} *Bold Text Support*\n"
+            f"{EMOJI['check']} *Italic Text Support*\n"
+            f"{EMOJI['check']} *Underline Support*\n"
+            f"{EMOJI['check']} *Strikethrough Support*\n"
+            f"{EMOJI['check']} *Premium Buttons*\n"
+            f"{EMOJI['check']} *Colorful UI*\n\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}"
         )
+        
+        keyboard = [[InlineKeyboardButton(f"{EMOJI['back']} 🔙 BACK TO HOME {EMOJI['home']}", callback_data="back")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
         return ConversationHandler.END
-
-async def photo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Photo mode start"""
-    user_id = update.message.from_user.id
-    user_data[user_id] = {'type': 'photo'}
-    await update.message.reply_text("📸 *Photo bhejo!*")
-    return WAITING_FOR_MEDIA
-
-async def file_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """File mode start"""
-    user_id = update.message.from_user.id
-    user_data[user_id] = {'type': 'file'}
-    await update.message.reply_text("📄 *File bhejo!*")
-    return WAITING_FOR_MEDIA
+    
+    elif query.data == "premium":
+        text = (
+            f"{EMOJI['crown']} **PREMIUM SERVICE** {EMOJI['crown']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['diamond']} **Quality:** *Premium Plus*\n"
+            f"{EMOJI['star']} **Speed:** *Ultra Fast*\n"
+            f"{EMOJI['fire']} **Support:** *24/7 Available*\n"
+            f"{EMOJI['rocket']} **Delivery:** *Instant*\n"
+            f"{EMOJI['heart']} **Formatting:** *100% Preserved*\n\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['crown']} *Experience Premium Now!* {EMOJI['crown']}"
+        )
+        
+        keyboard = [[InlineKeyboardButton(f"{EMOJI['back']} 🔙 BACK {EMOJI['back']}", callback_data="back")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(text, reply_markup=reply_markup)
+        return ConversationHandler.END
+    
+    elif query.data == "back":
+        await query.edit_message_text("🔄 *Going back...*")
+        # Restart
+        return await start(query, context)
 
 async def receive_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Photo ya File receive karo"""
+    """PREMIUM MEDIA RECEIVER"""
     user_id = update.message.from_user.id
     
     if user_id not in user_data:
-        await update.message.reply_text("❌ Pehle /start karo!")
+        await update.message.reply_text(
+            f"{EMOJI['cross']} **Session Expired!**\n"
+            f"{EMOJI['back']} /start karo firse!"
+        )
         return ConversationHandler.END
     
     media_type = user_data[user_id]['type']
     
     if media_type == 'photo' and update.message.photo:
         user_data[user_id]['file_id'] = update.message.photo[-1].file_id
-        await update.message.reply_text(
-            "✅ *Photo mil gayi!*\n\n"
-            "💬 *Ab text bhejo:*\n"
-            "_Bold, Italic, Underline sab support hai_"
+        
+        text = (
+            f"{EMOJI['check']} **PHOTO RECEIVED!** {EMOJI['check']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['star']} *Photo mil gayi!*\n"
+            f"{EMOJI['fire']} *Ab Text bhejo:*\n\n"
+            f"{EMOJI['diamond']} **Formatting Tips:**\n"
+            f"• **Bold** = `**text**`\n"
+            f"• _Italic_ = `__text__`\n"
+            f"• ~~Strike~~ = `~~text~~`\n"
+            f"• __Underline__ = `--text--`\n\n"
+            f"{EMOJI['rocket']} *Formatting ke saath text bhejo!*"
         )
+        
+        keyboard = [[InlineKeyboardButton(f"{EMOJI['cross']} ❌ CANCEL {EMOJI['cross']}", callback_data="cancel")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup)
         return WAITING_FOR_TEXT
     
     elif media_type == 'file' and update.message.document:
         user_data[user_id]['file_id'] = update.message.document.file_id
-        user_data[user_id]['file_name'] = update.message.document.file_name or "file"
-        await update.message.reply_text(
-            "✅ *File mil gayi!*\n\n"
-            f"📄 Name: {user_data[user_id]['file_name']}\n\n"
-            "💬 *Ab text bhejo:*\n"
-            "_Bold, Italic, Underline sab support hai_"
+        file_name = update.message.document.file_name or "Unknown"
+        file_size = update.message.document.file_size
+        file_size_mb = round(file_size / (1024 * 1024), 2)
+        
+        text = (
+            f"{EMOJI['check']} **FILE RECEIVED!** {EMOJI['check']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['file']} **File:** *{file_name}*\n"
+            f"{EMOJI['diamond']} **Size:** *{file_size_mb} MB*\n\n"
+            f"{EMOJI['star']} *Ab Text bhejo:*\n\n"
+            f"{EMOJI['diamond']} **Formatting Tips:**\n"
+            f"• **Bold** = `**text**`\n"
+            f"• _Italic_ = `__text__`\n"
+            f"• ~~Strike~~ = `~~text~~`\n"
+            f"• __Underline__ = `--text--`\n\n"
+            f"{EMOJI['rocket']} *Formatting ke saath text bhejo!*"
         )
+        
+        keyboard = [[InlineKeyboardButton(f"{EMOJI['cross']} ❌ CANCEL {EMOJI['cross']}", callback_data="cancel")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(text, reply_markup=reply_markup)
         return WAITING_FOR_TEXT
     
     else:
-        media_name = "Photo" if media_type == 'photo' else "File"
-        await update.message.reply_text(f"❌ {media_name} bhejo!")
+        media_name = "📸 Photo" if media_type == 'photo' else "📄 File"
+        await update.message.reply_text(
+            f"{EMOJI['cross']} *{media_name} bhejo!*\n"
+            f"{EMOJI['back']} Ya /cancel to go back"
+        )
         return WAITING_FOR_MEDIA
 
 async def receive_text_and_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Text receive karo aur FORMATTING KE SAATH bhejo"""
+    """PREMIUM TEXT + SEND"""
     user_id = update.message.from_user.id
     
     if user_id not in user_data or 'file_id' not in user_data[user_id]:
-        await update.message.reply_text("❌ Session expire! /start karo")
+        await update.message.reply_text(
+            f"{EMOJI['cross']} **Session Expired!**\n"
+            f"{EMOJI['home']} /start karo!"
+        )
         return ConversationHandler.END
     
-    # User ka text aur entities
+    # User text aur formatting
     user_text = update.message.text or ""
     user_entities = []
     
-    # Original entities copy karo (no shift needed)
     if update.message.entities:
         for entity in update.message.entities:
             entity_dict = {
@@ -132,7 +240,6 @@ async def receive_text_and_send(update: Update, context: ContextTypes.DEFAULT_TY
                 "offset": entity.offset,
                 "length": entity.length,
             }
-            # Optional fields
             if hasattr(entity, 'url') and entity.url:
                 entity_dict['url'] = entity.url
             if hasattr(entity, 'language') and entity.language:
@@ -143,7 +250,12 @@ async def receive_text_and_send(update: Update, context: ContextTypes.DEFAULT_TY
     media_type = user_data[user_id]['type']
     file_id = user_data[user_id]['file_id']
     
-    processing = await update.message.reply_text("⏳ Sending...")
+    # Processing message
+    processing_text = (
+        f"{EMOJI['sparkle']} **Processing...** {EMOJI['sparkle']}\n"
+        f"{EMOJI['fire']} *Premium delivery in progress!*"
+    )
+    processing = await update.message.reply_text(processing_text)
     
     try:
         if media_type == 'photo':
@@ -161,47 +273,80 @@ async def receive_text_and_send(update: Update, context: ContextTypes.DEFAULT_TY
         
         await processing.delete()
         
-        # Success message
-        await update.message.reply_text(
-            "✅ *Sent Successfully!*\n\n"
-            "📸 /photo - New Photo\n"
-            "📄 /file - New File\n"
-            "🏠 /start - Main Menu"
+        # SUCCESS MESSAGE
+        success_text = (
+            f"{EMOJI['crown']} **PREMIUM DELIVERY COMPLETE!** {EMOJI['crown']}\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['check']} *Successfully Sent!*\n"
+            f"{EMOJI['star']} *Formatting Preserved!*\n"
+            f"{EMOJI['diamond']} *Premium Quality!*\n\n"
+            f"{EMOJI['sparkle']} {'─' * 20} {EMOJI['sparkle']}\n\n"
+            f"{EMOJI['fire']} **Want more?** {EMOJI['fire']}"
         )
         
-        logger.info(f"✅ Sent! Text: {user_text[:50]}")
+        keyboard = [
+            [InlineKeyboardButton(f"{EMOJI['photo']} 📸 NEW PHOTO {EMOJI['photo']}", callback_data="photo")],
+            [InlineKeyboardButton(f"{EMOJI['file']} 📄 NEW FILE {EMOJI['file']}", callback_data="file")],
+            [InlineKeyboardButton(f"{EMOJI['home']} 🏠 MAIN MENU {EMOJI['home']}", callback_data="back")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(success_text, reply_markup=reply_markup)
+        
+        logger.info(f"✅ Sent: {user_text[:50]}")
         
     except Exception as e:
         logger.error(f"Send error: {e}")
         await processing.delete()
         
-        # Fallback without entities
+        # Fallback
         try:
             if media_type == 'photo':
                 await update.message.reply_photo(photo=file_id, caption=user_text)
             else:
                 await update.message.reply_document(document=file_id, caption=user_text)
-            await update.message.reply_text("⚠️ Sent without formatting!")
-        except Exception as e2:
-            await update.message.reply_text(f"❌ Failed! Try again.")
+            
+            await update.message.reply_text(
+                f"{EMOJI['check']} *Sent!* (without formatting)\n"
+                f"{EMOJI['home']} /start for more!"
+            )
+        except:
+            await update.message.reply_text(
+                f"{EMOJI['cross']} *Failed!*\n"
+                f"{EMOJI['back']} /start to try again"
+            )
     
     # Cleanup
     del user_data[user_id]
     return ConversationHandler.END
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Cancel"""
+async def cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancel via button"""
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = query.from_user.id
+    if user_id in user_data:
+        del user_data[user_id]
+    
+    await query.edit_message_text(
+        f"{EMOJI['cross']} **CANCELLED!**\n"
+        f"{EMOJI['home']} /start to begin again"
+    )
+    return ConversationHandler.END
+
+async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancel via command"""
     user_id = update.message.from_user.id
     if user_id in user_data:
         del user_data[user_id]
     
-    keyboard = [
-        [InlineKeyboardButton("🔄 Start Again", callback_data="start_again")],
-    ]
+    keyboard = [[InlineKeyboardButton(f"{EMOJI['home']} 🏠 MAIN MENU {EMOJI['home']}", callback_data="back")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        "❌ Cancelled! /start to begin again",
+        f"{EMOJI['cross']} **CANCELLED!**\n"
+        f"{EMOJI['back']} *Go back to main menu!*",
         reply_markup=reply_markup
     )
     return ConversationHandler.END
@@ -209,34 +354,35 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     
-    # Command handlers
+    # Start command
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", lambda u, c: u.message.reply_text("/start karo!")))
     
-    # Button handler
-    app.add_handler(CallbackQueryHandler(button_handler, pattern="^(photo|file|help)$"))
+    # Button handlers
+    app.add_handler(CallbackQueryHandler(button_handler, pattern="^(photo|file|help|premium|back)$"))
+    app.add_handler(CallbackQueryHandler(cancel_callback, pattern="^cancel$"))
     
     # Conversation handler
     conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("photo", photo_command),
-            CommandHandler("file", file_command),
-        ],
+        entry_points=[],
         states={
             WAITING_FOR_MEDIA: [
                 MessageHandler(filters.PHOTO | filters.Document.ALL, receive_media),
-                MessageHandler(filters.TEXT, lambda u, c: u.message.reply_text("📸 Photo ya 📄 File bhejo!")),
+                MessageHandler(filters.TEXT, lambda u, c: u.message.reply_text(
+                    f"{EMOJI['cross']} *Photo ya File bhejo!*\n"
+                    f"{EMOJI['back']} /cancel"
+                )),
             ],
             WAITING_FOR_TEXT: [
                 MessageHandler(filters.TEXT, receive_text_and_send),
             ],
         },
-        fallbacks=[CommandHandler("cancel", cancel)],
+        fallbacks=[CommandHandler("cancel", cancel_command)],
     )
     
     app.add_handler(conv)
     
-    logger.info("🚀 Photo+Text Bot with Buttons Running!")
+    logger.info("👑 PREMIUM BOT RUNNING!")
+    print("✅ PREMIUM BOT STARTED!")
     app.run_polling()
 
 if __name__ == '__main__':
