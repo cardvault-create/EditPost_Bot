@@ -3,7 +3,6 @@ import os
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
-from telegram.constants import ParseMode
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
@@ -23,11 +22,66 @@ WAITING_FOR_BUTTON_NAME = 10
 WAITING_FOR_BUTTON_LINK = 11
 WAITING_FOR_BUTTON_POSITION = 12
 WAITING_FOR_BOT_API = 13
-WAITING_FOR_FORWARD_POST = 14
 
 user_posts = {}
 post_counter = {}
 cloned_bots = {}
+
+# 🔥 BOT CODE TEMPLATE (same features ka)
+BOT_TEMPLATE = r'''
+import logging
+import os
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
+
+BOT_TOKEN = "{token}"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+WAITING_FOR_PHOTO = 1
+WAITING_FOR_PHOTO_TEXT = 2
+WAITING_FOR_FILE = 3
+WAITING_FOR_FILE_TEXT = 4
+WAITING_FOR_VIDEO = 5
+WAITING_FOR_VIDEO_TEXT = 6
+WAITING_FOR_EDIT_NUMBER = 7
+WAITING_FOR_EDIT_TEXT = 8
+WAITING_FOR_ADD_BUTTON_NUMBER = 9
+WAITING_FOR_BUTTON_NAME = 10
+WAITING_FOR_BUTTON_LINK = 11
+WAITING_FOR_BUTTON_POSITION = 12
+
+user_posts = {{}}
+post_counter = {{}}
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    if user_id not in post_counter:
+        post_counter[user_id] = 0
+    if user_id not in user_posts:
+        user_posts[user_id] = {{}}
+    
+    welcome = "<b><i>WELCOME TO YOUR BOT</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>All Features Active!</i></b>\n<b><i>Select Option</i></b>"
+    
+    keyboard = [
+        [InlineKeyboardButton("📸 Photo + Text", callback_data="photo"),
+         InlineKeyboardButton("📄 File + Text", callback_data="file")],
+        [InlineKeyboardButton("🎬 Video + Text", callback_data="video")],
+        [InlineKeyboardButton("✏️ Edit Post", callback_data="edit"),
+         InlineKeyboardButton("📊 My Posts", callback_data="posts")],
+        [InlineKeyboardButton("➕ Add Button In Post", callback_data="add_button")],
+    ]
+    await update.message.reply_text(welcome, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+
+def main():
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    logger.info("CLONED BOT RUNNING!")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
+'''
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
@@ -44,7 +98,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "<b><i>Bold and Italic Text Support</i></b>\n"
         "<b><i>Edit Posts Anytime</i></b>\n"
         "<b><i>Add Custom Buttons</i></b>\n"
-        "<b><i>Forward Without Bot Name</i></b>\n\n"
+        "<b><i>Auto Clone Bot Feature</i></b>\n\n"
         "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
         "<b><i>Select Option Below</i></b>"
     )
@@ -56,7 +110,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("✏️ Edit Post", callback_data="edit"),
          InlineKeyboardButton("📊 My Posts", callback_data="posts")],
         [InlineKeyboardButton("➕ Add Button In Post", callback_data="add_button")],
-        [InlineKeyboardButton("📤 Forward Post", callback_data="forward_post")],
         [InlineKeyboardButton("🩵 CoNtacT - OwNer For HelP", url="https://t.me/BESTCHEAT_OWNER")],
         [InlineKeyboardButton("🤖 Create Your Own Bot", callback_data="create_bot")],
     ]
@@ -141,24 +194,12 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         return WAITING_FOR_ADD_BUTTON_NUMBER
     
-    elif query.data == "forward_post":
-        if not user_posts.get(user_id):
-            text = "<b><i>No posts to forward</i></b>"
-            keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
-            await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-            return ConversationHandler.END
-        
-        text = "<b><i>FORWARD POST</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Send post number to forward</i></b>"
-        keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return WAITING_FOR_FORWARD_POST
-    
     elif query.data == "create_bot":
         text = (
             "<b><i>CREATE YOUR OWN BOT</i></b>\n"
             "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-            "<b><i>Send your Bot API Token from @BotFather</i></b>\n"
-            "<b><i>Your bot will have same features!</i></b>\n\n"
+            "<b><i>Send Bot API Token from @BotFather</i></b>\n"
+            "<b><i>Bot auto deploys instantly!</i></b>\n\n"
             "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
         keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
@@ -181,7 +222,6 @@ async def go_menu(query):
         [InlineKeyboardButton("✏️ Edit Post", callback_data="edit"),
          InlineKeyboardButton("📊 My Posts", callback_data="posts")],
         [InlineKeyboardButton("➕ Add Button In Post", callback_data="add_button")],
-        [InlineKeyboardButton("📤 Forward Post", callback_data="forward_post")],
         [InlineKeyboardButton("🩵 CoNtacT - OwNer For HelP", url="https://t.me/BESTCHEAT_OWNER")],
         [InlineKeyboardButton("🤖 Create Your Own Bot", callback_data="create_bot")],
     ]
@@ -206,7 +246,7 @@ async def media_received(update: Update, context: ContextTypes.DEFAULT_TYPE, med
     context.user_data['type'] = media_type
     
     text = f"<b><i>{media_type.upper()} RECEIVED</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Now send your text</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Cancel", callback_data="menu")]]
+    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
     
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
     return True
@@ -266,11 +306,9 @@ async def send_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await processing.delete()
         
-        success = f"<b><i>PREMIUM POST SENT</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Post #{post_num}</i></b>\n<b><i>Use Add Button In Post to add buttons</i></b>\n<b><i>Use Forward Post to send without bot name</i></b>"
-        
+        success = f"<b><i>POST #{post_num} SENT!</i></b>"
         keyboard = [
             [InlineKeyboardButton("➕ Add Button", callback_data="add_button")],
-            [InlineKeyboardButton("📤 Forward Post", callback_data="forward_post")],
             [InlineKeyboardButton("🏠 Go Menu", callback_data="menu")],
         ]
         
@@ -281,66 +319,6 @@ async def send_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("<b><i>Error! Try again.</i></b>", parse_mode='HTML')
     
     context.user_data.clear()
-    return ConversationHandler.END
-
-async def forward_post_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    
-    try:
-        post_num = int(update.message.text.strip())
-    except:
-        await update.message.reply_text("<b><i>Send valid post number</i></b>", parse_mode='HTML')
-        return WAITING_FOR_FORWARD_POST
-    
-    if post_num not in user_posts.get(user_id, {}):
-        await update.message.reply_text("<b><i>Post not found</i></b>", parse_mode='HTML')
-        return WAITING_FOR_FORWARD_POST
-    
-    post = user_posts[user_id][post_num]
-    buttons = post.get('buttons', [])
-    reply_markup = InlineKeyboardMarkup(buttons) if buttons else None
-    
-    # 🔥 DIRECT POST WITHOUT BOT NAME - Using copy_message for anonymity
-    try:
-        if post['type'] == 'photo':
-            sent_msg = await update.message.reply_photo(
-                photo=post['file_id'],
-                caption=post['text'],
-                caption_entities=post.get('entities'),
-                reply_markup=reply_markup
-            )
-        elif post['type'] == 'video':
-            sent_msg = await update.message.reply_video(
-                video=post['file_id'],
-                caption=post['text'],
-                caption_entities=post.get('entities'),
-                reply_markup=reply_markup
-            )
-        elif post['type'] == 'file':
-            sent_msg = await update.message.reply_document(
-                document=post['file_id'],
-                caption=post['text'],
-                caption_entities=post.get('entities'),
-                reply_markup=reply_markup
-            )
-        
-        # Forward instruction
-        text = (
-            "<b><i>POST READY TO FORWARD!</i></b>\n"
-            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-            "<b><i>👆 Select the post above</i></b>\n"
-            "<b><i>📤 Click Forward</i></b>\n"
-            "<b><i>🔍 Choose channel/group/user</i></b>\n\n"
-            "<b><i>✅ Bot name will NOT be visible!</i></b>\n"
-            "<b><i>Only the post content will be forwarded</i></b>"
-        )
-        
-        keyboard = [[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]
-        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        
-    except Exception as e:
-        await update.message.reply_text(f"<b><i>Error: {str(e)[:100]}</i></b>", parse_mode='HTML')
-    
     return ConversationHandler.END
 
 async def add_button_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -404,10 +382,9 @@ async def button_position(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['btn_name'] = update.message.text
-    
     await update.message.reply_text(
-        "<b><i>Send button link</i></b>\n<i>Example: https://t.me/username</i>",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu")]]),
+        "<b><i>Send button link</i></b>",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="menu")]]),
         parse_mode='HTML'
     )
     return WAITING_FOR_BUTTON_LINK
@@ -442,7 +419,7 @@ async def button_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif post['type'] == 'file':
             await update.message.reply_document(document=post['file_id'], caption=post['text'], caption_entities=post.get('entities'), reply_markup=reply_markup)
         
-        text = "<b><i>BUTTON ADDED!</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Add more or Done?</i></b>"
+        text = "<b><i>BUTTON ADDED!</i></b>\n\n<b><i>Add more or Done?</i></b>"
         
         keyboard = [
             [InlineKeyboardButton("➕ Same Line", callback_data="btn_same"),
@@ -475,14 +452,8 @@ async def finish_buttons(query, context):
         except:
             pass
     
-    text = (
-        "<b><i>POST READY!</i></b>\n"
-        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-        "<b><i>Use Forward Post to send!</i></b>"
-    )
-    
-    keyboard = [[InlineKeyboardButton("📤 Forward Post", callback_data="forward_post")],
-                [InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]
+    text = "<b><i>POST READY WITH BUTTONS!</i></b>"
+    keyboard = [[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]
     
     await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
     context.user_data.clear()
@@ -563,45 +534,52 @@ async def create_bot_api(update: Update, context: ContextTypes.DEFAULT_TYPE):
     api_token = update.message.text.strip()
     
     if not api_token or ":" not in api_token:
-        await update.message.reply_text("<b><i>Invalid API Token! Send valid token from @BotFather</i></b>", parse_mode='HTML')
+        await update.message.reply_text("<b><i>Invalid API Token! Get from @BotFather</i></b>", parse_mode='HTML')
         return WAITING_FOR_BOT_API
     
-    # Store cloned bot
-    if user_id not in cloned_bots:
-        cloned_bots[user_id] = []
-    cloned_bots[user_id].append(api_token)
+    # 🔥 AUTO-CLONE: Create bot file and start it
+    bot_code = BOT_TEMPLATE.replace("{token}", api_token)
     
-    # Try to start the cloned bot
     try:
-        clone_app = Application.builder().token(api_token).build()
+        # Save bot file
+        filename = f"bot_{user_id}.py"
+        with open(filename, "w") as f:
+            f.write(bot_code)
         
-        # Add same handlers
-        clone_app.add_handler(CommandHandler("start", start))
+        # Start bot in background
+        async def run_clone():
+            try:
+                exec(bot_code)
+            except Exception as e:
+                logger.error(f"Clone error: {e}")
         
-        # Start in background
-        asyncio.create_task(clone_app.run_polling())
+        asyncio.create_task(run_clone())
+        
+        if user_id not in cloned_bots:
+            cloned_bots[user_id] = []
+        cloned_bots[user_id].append(api_token)
         
         text = (
-            "<b><i>BOT CLONED SUCCESSFULLY!</i></b>\n"
+            "<b><i>🤖 BOT CREATED SUCCESSFULLY!</i></b>\n"
             "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
             "<b><i>Your bot is now LIVE!</i></b>\n"
-            "<b><i>All features are active:</i></b>\n"
+            "<b><i>Go to your bot and send /start</i></b>\n\n"
+            "<b><i>Features Active:</i></b>\n"
             "<b><i>✅ Photo + Text</i></b>\n"
             "<b><i>✅ File + Text</i></b>\n"
             "<b><i>✅ Video + Text</i></b>\n"
             "<b><i>✅ Edit Posts</i></b>\n"
-            "<b><i>✅ Add Buttons</i></b>\n"
-            "<b><i>✅ Forward Posts</i></b>\n\n"
-            "<b><i>Go to your bot and send /start</i></b>\n\n"
+            "<b><i>✅ Add Buttons</i></b>\n\n"
             "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
+        
     except Exception as e:
         text = (
             "<b><i>BOT TOKEN SAVED!</i></b>\n"
             "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
             f"<b><i>Token: {api_token[:20]}...</i></b>\n\n"
-            "<b><i>Note: Bot will start when deployed</i></b>\n"
-            "<b><i>Use this token with same code on Railway</i></b>\n\n"
+            "<b><i>Bot is starting...</i></b>\n"
+            "<b><i>Send /start to your bot now!</i></b>\n\n"
             "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
     
@@ -616,7 +594,7 @@ def main():
     
     conv = ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(button_click, pattern="^(photo|file|video|edit|posts|add_button|forward_post|create_bot|menu)$"),
+            CallbackQueryHandler(button_click, pattern="^(photo|file|video|edit|posts|add_button|create_bot|menu)$"),
         ],
         states={
             WAITING_FOR_PHOTO: [
@@ -668,10 +646,6 @@ def main():
             ],
             WAITING_FOR_BOT_API: [
                 MessageHandler(filters.TEXT, create_bot_api),
-                CallbackQueryHandler(button_click, pattern="^menu$"),
-            ],
-            WAITING_FOR_FORWARD_POST: [
-                MessageHandler(filters.TEXT, forward_post_handler),
                 CallbackQueryHandler(button_click, pattern="^menu$"),
             ],
         },
