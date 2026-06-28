@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
@@ -9,10 +10,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN environment variable set nahi hai!")
 
-# Logging setup
+# Logging setup - DETAILED
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.DEBUG  # Debug level for more details
 )
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 {your_emoji()} Premium emojis ke saath response
 
 {your_emoji()} {'─' * 20} {your_emoji()}
-
-{your_emoji()} <b>Commands:</b>
-{your_emoji()} /start - Bot start karein
-{your_emoji()} /help - Help dekhein
-{your_emoji()} /premium - Premium info
 
 {your_emoji()} <b>Send photo with caption for premium experience!</b> {your_emoji()}
 """
@@ -87,17 +83,37 @@ async def premium_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_photo_with_caption(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Photo + Caption processing"""
     try:
+        logger.info("📸 Photo with caption received")
+        
+        # Check if photo exists
+        if not update.message.photo:
+            logger.error("No photo found in message")
+            await update.message.reply_text(f"{your_emoji()} Photo nahi mili!")
+            return
+        
         # Processing indicator
         processing_msg = await update.message.reply_text(
             f"{your_emoji()} <b>Processing your photo...</b>",
             parse_mode='HTML'
         )
         
-        # Photo download karein
-        photo_file = await update.message.photo[-1].get_file()
+        try:
+            # Photo download karein
+            photo_file = await update.message.photo[-1].get_file()
+            logger.info(f"Photo file object: {photo_file}")
+        except Exception as file_error:
+            logger.error(f"File download error: {file_error}")
+            logger.error(traceback.format_exc())
+            await processing_msg.delete()
+            await update.message.reply_text(
+                f"{your_emoji()} ❌ Photo download failed: {str(file_error)}",
+                parse_mode='HTML'
+            )
+            return
         
         # Caption text
-        caption_text = update.message.caption if update.message.caption else "No caption provided"
+        caption_text = update.message.caption if update.message.caption else "No caption"
+        logger.info(f"Caption: {caption_text}")
         
         # Premium formatted caption
         premium_caption = f"""
@@ -115,7 +131,6 @@ async def handle_photo_with_caption(update: Update, context: ContextTypes.DEFAUL
 
 {your_emoji()} ✅ Quality: Premium
 {your_emoji()} ⚡ Speed: Instant
-{your_emoji()} 🎯 Accuracy: 100%
 
 {your_emoji()} {'━' * 25} {your_emoji()}
 {your_emoji()} <b>Processed with Premium Quality!</b> {your_emoji()}
@@ -123,12 +138,34 @@ async def handle_photo_with_caption(update: Update, context: ContextTypes.DEFAUL
         
         await processing_msg.delete()
         
-        await update.message.reply_photo(
-            photo=photo_file,
-            caption=premium_caption,
-            parse_mode='HTML'
-        )
+        # Photo bhejo
+        try:
+            await update.message.reply_photo(
+                photo=photo_file,
+                caption=premium_caption,
+                parse_mode='HTML'
+            )
+            logger.info("Photo sent successfully")
+        except Exception as send_error:
+            logger.error(f"Send error: {send_error}")
+            logger.error(traceback.format_exc())
+            
+            # Try without emoji as fallback
+            try:
+                simple_caption = f"Photo Received!\n\nYour Message:\n{caption_text}"
+                await update.message.reply_photo(
+                    photo=photo_file,
+                    caption=simple_caption
+                )
+                logger.info("Photo sent without emoji (fallback)")
+            except Exception as fallback_error:
+                logger.error(f"Fallback error: {fallback_error}")
+                await update.message.reply_text(
+                    f"{your_emoji()} ❌ Photo send failed completely!"
+                )
+                return
         
+        # Success message
         confirm_msg = f"""
 {your_emoji()} <b>✅ PREMIUM SERVICE COMPLETED</b> {your_emoji()}
 
@@ -140,13 +177,35 @@ async def handle_photo_with_caption(update: Update, context: ContextTypes.DEFAUL
         await update.message.reply_text(confirm_msg, parse_mode='HTML')
         
     except Exception as e:
-        logger.error(f"Photo processing error: {e}")
+        logger.error(f"Main error: {e}")
+        logger.error(traceback.format_exc())
+        
+        # Detailed error message
         error_msg = f"""
-{your_emoji()} <b>❌ ERROR</b> {your_emoji()}
+{your_emoji()} <b>❌ ERROR DETAILS</b> {your_emoji()}
 
-{your_emoji()} Please try again!
+📛 <b>Error Type:</b> {type(e).__name__}
+💬 <b>Message:</b> {str(e)[:200]}
+
+🔍 Railway logs check karein for full details
+🔄 Try again with different photo
 """
         await update.message.reply_text(error_msg, parse_mode='HTML')
+
+async def handle_photo_only(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Photo bina caption ke"""
+    try:
+        msg = f"""
+{your_emoji()} <b>PHOTO RECEIVED!</b> {your_emoji()}
+
+{your_emoji()} Photo mil gayi lekin caption nahi hai!
+{your_emoji()} Caption mein text likhkar bhejo for full service!
+
+{your_emoji()} <b>Try: Photo + Caption</b> {your_emoji()}
+"""
+        await update.message.reply_text(msg, parse_mode='HTML')
+    except Exception as e:
+        logger.error(f"Photo only error: {e}")
 
 async def handle_document_with_caption(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Document/File processing"""
@@ -161,7 +220,7 @@ async def handle_document_with_caption(update: Update, context: ContextTypes.DEF
         file_size = update.message.document.file_size
         file_size_mb = round(file_size / (1024 * 1024), 2)
         
-        caption_text = update.message.caption if update.message.caption else "No caption provided"
+        caption_text = update.message.caption if update.message.caption else "No caption"
         
         premium_caption = f"""
 {your_emoji()} <b>PREMIUM FILE SERVICE</b> {your_emoji()}
@@ -169,13 +228,9 @@ async def handle_document_with_caption(update: Update, context: ContextTypes.DEF
 
 {your_emoji()} <b>📄 File Received!</b>
 
-{your_emoji()} {'─' * 20} {your_emoji()}
-
 {your_emoji()} <b>📋 Details:</b>
 {your_emoji()} Name: {doc_name}
 {your_emoji()} Size: {file_size_mb} MB
-
-{your_emoji()} {'─' * 20} {your_emoji()}
 
 {your_emoji()} <b>💬 Message:</b>
 {your_emoji()} {caption_text}
@@ -204,7 +259,11 @@ async def handle_document_with_caption(update: Update, context: ContextTypes.DEF
         
     except Exception as e:
         logger.error(f"File processing error: {e}")
-        await update.message.reply_text(f"{your_emoji()} Error! Please try again.", parse_mode='HTML')
+        logger.error(traceback.format_exc())
+        await update.message.reply_text(
+            f"{your_emoji()} ❌ Error: {str(e)[:100]}",
+            parse_mode='HTML'
+        )
 
 async def handle_text_only(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Text messages"""
@@ -219,20 +278,16 @@ async def handle_text_only(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 {your_emoji()} {'━' * 25} {your_emoji()}
 
-{your_emoji()} <b>Available Services:</b>
-{your_emoji()} 📸 Photo + Caption
-{your_emoji()} 📄 File + Text
-{your_emoji()} 🎯 Premium Emojis
-
-{your_emoji()} <b>Send photo with caption!</b> {your_emoji()}
+{your_emoji()} 📸 <b>Photo + Caption bhejo for full experience!</b>
 """
     await update.message.reply_text(premium_text, parse_mode='HTML')
 
 def main():
     """Bot start"""
     logger.info("🌟 Starting Premium Bot...")
+    logger.info(f"💎 Emoji ID: {PREMIUM_EMOJI}")
     
-    # Application create (Latest syntax)
+    # Application create
     app = Application.builder().token(BOT_TOKEN).build()
     
     # Command handlers
@@ -240,10 +295,16 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("premium", premium_info))
     
-    # Photo + Caption
+    # Photo + Caption (MAIN)
     app.add_handler(MessageHandler(
         filters.PHOTO & filters.CAPTION,
         handle_photo_with_caption
+    ))
+    
+    # Photo only (no caption)
+    app.add_handler(MessageHandler(
+        filters.PHOTO & ~filters.CAPTION,
+        handle_photo_only
     ))
     
     # Document + Caption
@@ -258,7 +319,7 @@ def main():
         handle_text_only
     ))
     
-    logger.info("✅ Bot is running on Railway!")
+    logger.info("✅ Bot is running!")
     
     # Start polling
     app.run_polling(allowed_updates=Update.ALL_TYPES)
