@@ -9,19 +9,23 @@ logger = logging.getLogger(__name__)
 
 # States
 WAITING_FOR_PHOTO = 1
-WAITING_FOR_TEXT = 2
+WAITING_FOR_PHOTO_TEXT = 2
 WAITING_FOR_FILE = 3
 WAITING_FOR_FILE_TEXT = 4
 WAITING_FOR_EDIT_NUMBER = 5
 WAITING_FOR_EDIT_TEXT = 6
-WAITING_FOR_EDIT_PHOTO = 7
 
 # Database
 user_posts = {}
 post_counter = {}
 
+# 🎨 PREMIUM TEXT FUNCTION
+def P(text):
+    """All text ko PREMIUM bold+italic banata hai"""
+    return f"__**{text}**__"
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Main Menu"""
+    """Main Menu - No emojis, Pure Premium Text"""
     user_id = update.message.from_user.id
     
     if user_id not in post_counter:
@@ -30,170 +34,184 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_posts[user_id] = {}
     
     welcome = (
-        "✨ **WELCOME TO PREMIUM BOT** ✨\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-        "🔥 *Premium Photo & File Service*\n"
-        "💎 *Bold & Italic Text Support*\n"
-        "⭐ *Edit Posts Anytime*\n"
-        "🚀 *Instant Delivery*\n\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-        "👇 *Select Option Below*"
+        f"{P('WELCOME TO PREMIUM BOT')}\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P('Premium Photo and File Service')}\n"
+        f"{P('Bold and Italic Text Support')}\n"
+        f"{P('Edit Posts Anytime')}\n"
+        f"{P('Instant Delivery')}\n\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P('Select Option Below')}"
     )
     
     keyboard = [
-        [InlineKeyboardButton("📸 Photo + Text", callback_data="start_photo")],
-        [InlineKeyboardButton("📄 File + Text", callback_data="start_file")],
-        [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_menu")],
-        [InlineKeyboardButton("📊 My Posts", callback_data="my_posts")],
+        [InlineKeyboardButton(f"{P('Photo + Text')}", callback_data="photo")],
+        [InlineKeyboardButton(f"{P('File + Text')}", callback_data="file")],
+        [InlineKeyboardButton(f"{P('Edit Post')}", callback_data="edit")],
+        [InlineKeyboardButton(f"{P('My Posts')}", callback_data="posts")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(welcome, reply_markup=reply_markup)
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """All button clicks"""
+async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle all button clicks"""
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
     
-    if query.data == "start_photo":
+    if query.data == "photo":
+        context.user_data['mode'] = 'photo'
         text = (
-            "📸 **PHOTO MODE**\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            "🖼️ *Please send your photo*\n"
-            "💎 *High quality recommended*\n\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+            f"{P('PHOTO MODE')}\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+            f"{P('Please send your photo')}\n"
+            f"{P('High quality recommended')}\n\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}"
         )
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
+        keyboard = [[InlineKeyboardButton(f"{P('Back')}", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
         return WAITING_FOR_PHOTO
     
-    elif query.data == "start_file":
+    elif query.data == "file":
+        context.user_data['mode'] = 'file'
         text = (
-            "📄 **FILE MODE**\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            "📎 *Please send your file*\n"
-            "💎 *Any format supported*\n\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+            f"{P('FILE MODE')}\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+            f"{P('Please send your file')}\n"
+            f"{P('Any format supported')}\n\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}"
         )
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
+        keyboard = [[InlineKeyboardButton(f"{P('Back')}", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
         return WAITING_FOR_FILE
     
-    elif query.data == "main_menu":
-        welcome = (
-            "✨ **MAIN MENU** ✨\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            "👇 *Select Option Below*"
-        )
-        keyboard = [
-            [InlineKeyboardButton("📸 Photo + Text", callback_data="start_photo")],
-            [InlineKeyboardButton("📄 File + Text", callback_data="start_file")],
-            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_menu")],
-            [InlineKeyboardButton("📊 My Posts", callback_data="my_posts")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(welcome, reply_markup=reply_markup)
-        return ConversationHandler.END
-    
-    elif query.data == "edit_menu":
+    elif query.data == "edit":
         if not user_posts.get(user_id):
             text = (
-                "✏️ **EDIT POST**\n"
-                "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-                "❌ *No posts to edit!*\n"
-                "📸 *Create a post first!*\n\n"
-                "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+                f"{P('EDIT POST')}\n"
+                f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+                f"{P('No posts to edit')}\n"
+                f"{P('Create a post first')}\n\n"
+                f"{P('━━━━━━━━━━━━━━━━━━')}"
             )
-            keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="main_menu")]]
+            keyboard = [[InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await query.edit_message_text(text, reply_markup=reply_markup)
             return ConversationHandler.END
         
-        # Show user's posts
         text = (
-            "✏️ **EDIT POST**\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            "📋 *Your Posts:*\n"
+            f"{P('EDIT POST')}\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+            f"{P('Your Posts')}\n"
         )
-        for post_num in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
-            post = user_posts[user_id][post_num]
-            post_type = "📸" if post['type'] == 'photo' else "📄"
-            text += f"{post_type} Post #{post_num}: {post['text'][:30]}...\n"
+        for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
+            post = user_posts[user_id][pnum]
+            ptype = "Photo" if post['type'] == 'photo' else "File"
+            text += f"{P(f'Post {pnum} | {ptype}')}\n"
+            text += f"{post['text'][:40]}...\n\n"
         
-        text += "\n💬 *Send post number to edit*\n"
-        text += "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+        text += f"{P('Send post number to edit')}\n"
+        text += f"{P('━━━━━━━━━━━━━━━━━━')}"
         
-        keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="main_menu")]]
+        keyboard = [[InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
         return WAITING_FOR_EDIT_NUMBER
     
-    elif query.data == "my_posts":
+    elif query.data == "posts":
         if not user_posts.get(user_id):
             text = (
-                "📊 **MY POSTS**\n"
-                "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-                "❌ *No posts yet!*\n"
-                "🚀 *Create your first post!*\n\n"
-                "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+                f"{P('MY POSTS')}\n"
+                f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+                f"{P('No posts yet')}\n"
+                f"{P('Create your first post')}\n\n"
+                f"{P('━━━━━━━━━━━━━━━━━━')}"
             )
         else:
             text = (
-                "📊 **MY POSTS**\n"
-                "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-                f"📋 *Total Posts: {post_counter.get(user_id, 0)}*\n\n"
+                f"{P('MY POSTS')}\n"
+                f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+                f"{P(f'Total Posts {post_counter.get(user_id, 0)}')}\n\n"
             )
-            for post_num in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
-                post = user_posts[user_id][post_num]
-                post_type = "📸 Photo" if post['type'] == 'photo' else "📄 File"
-                text += f"🔹 Post #{post_num} | {post_type}\n"
-                text += f"💬 {post['text'][:50]}...\n\n"
-            
-            text += "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+            for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
+                post = user_posts[user_id][pnum]
+                ptype = "Photo" if post['type'] == 'photo' else "File"
+                text += f"{P(f'Post {pnum} | {ptype}')}\n"
+                text += f"{post['text'][:50]}...\n\n"
+            text += f"{P('━━━━━━━━━━━━━━━━━━')}"
         
-        keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="main_menu")]]
+        keyboard = [[InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
         return ConversationHandler.END
+    
+    elif query.data == "menu":
+        await query.edit_message_text(f"{P('Loading Menu...')}")
+        return await start_menu(query)
 
-async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_menu(query):
+    """Menu dikhao"""
+    user_id = query.from_user.id
+    
+    welcome = (
+        f"{P('WELCOME TO PREMIUM BOT')}\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P('Premium Photo and File Service')}\n"
+        f"{P('Bold and Italic Text Support')}\n"
+        f"{P('Edit Posts Anytime')}\n"
+        f"{P('Instant Delivery')}\n\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P('Select Option Below')}"
+    )
+    
+    keyboard = [
+        [InlineKeyboardButton(f"{P('Photo + Text')}", callback_data="photo")],
+        [InlineKeyboardButton(f"{P('File + Text')}", callback_data="file")],
+        [InlineKeyboardButton(f"{P('Edit Post')}", callback_data="edit")],
+        [InlineKeyboardButton(f"{P('My Posts')}", callback_data="posts")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(welcome, reply_markup=reply_markup)
+    return ConversationHandler.END
+
+async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Photo receive karo"""
     user_id = update.message.from_user.id
     
     if not update.message.photo:
-        await update.message.reply_text("❌ *Please send a photo!*")
+        await update.message.reply_text(f"{P('Please send a photo')}")
         return WAITING_FOR_PHOTO
     
     context.user_data['file_id'] = update.message.photo[-1].file_id
     context.user_data['type'] = 'photo'
     
     text = (
-        "✅ **PHOTO RECEIVED!**\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-        "💬 *Now send your text*\n"
-        "🔥 *Bold & Italic supported!*\n\n"
-        "💡 **Formatting:**\n"
-        "• **Bold** = `**text**`\n"
-        "• __Italic__ = `__text__`\n"
-        "• ~~Strike~~ = `~~text~~`\n\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+        f"{P('PHOTO RECEIVED')}\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P('Now send your text')}\n"
+        f"{P('Bold and Italic supported')}\n\n"
+        f"{P('Formatting Tips')}\n"
+        f"{P('Bold = double star text double star')}\n"
+        f"{P('Italic = double underscore text double underscore')}\n\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}"
     )
     
-    keyboard = [[InlineKeyboardButton("🔙 Cancel", callback_data="main_menu")]]
+    keyboard = [[InlineKeyboardButton(f"{P('Cancel')}", callback_data="menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(text, reply_markup=reply_markup)
-    return WAITING_FOR_TEXT
+    return WAITING_FOR_PHOTO_TEXT
 
-async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def file_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """File receive karo"""
     user_id = update.message.from_user.id
     
     if not update.message.document:
-        await update.message.reply_text("❌ *Please send a file!*")
+        await update.message.reply_text(f"{P('Please send a file')}")
         return WAITING_FOR_FILE
     
     context.user_data['file_id'] = update.message.document.file_id
@@ -201,24 +219,21 @@ async def receive_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['type'] = 'file'
     
     text = (
-        "✅ **FILE RECEIVED!**\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-        f"📄 *File:* {context.user_data['file_name']}\n\n"
-        "💬 *Now send your text*\n"
-        "🔥 *Bold & Italic supported!*\n\n"
-        "💡 **Formatting:**\n"
-        "• **Bold** = `**text**`\n"
-        "• __Italic__ = `__text__`\n\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+        f"{P('FILE RECEIVED')}\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P(f'File {context.user_data[\"file_name\"]}')}\n\n"
+        f"{P('Now send your text')}\n"
+        f"{P('Bold and Italic supported')}\n\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}"
     )
     
-    keyboard = [[InlineKeyboardButton("🔙 Cancel", callback_data="main_menu")]]
+    keyboard = [[InlineKeyboardButton(f"{P('Cancel')}", callback_data="menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(text, reply_markup=reply_markup)
     return WAITING_FOR_FILE_TEXT
 
-async def send_photo_with_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def send_photo_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Photo + Text bhejo"""
     user_id = update.message.from_user.id
     
@@ -244,7 +259,7 @@ async def send_photo_with_text(update: Update, context: ContextTypes.DEFAULT_TYP
     post_counter[user_id] += 1
     post_num = post_counter[user_id]
     
-    # Save post
+    # Save
     if user_id not in user_posts:
         user_posts[user_id] = {}
     user_posts[user_id][post_num] = {
@@ -254,7 +269,7 @@ async def send_photo_with_text(update: Update, context: ContextTypes.DEFAULT_TYP
         'entities': user_entities
     }
     
-    processing = await update.message.reply_text("⚡ *Processing...*")
+    processing = await update.message.reply_text(f"{P('Processing')}")
     
     try:
         await update.message.reply_photo(
@@ -265,34 +280,33 @@ async def send_photo_with_text(update: Update, context: ContextTypes.DEFAULT_TYP
         
         await processing.delete()
         
-        # Success message
-        success_text = (
-            "✅ **PREMIUM POST SENT!**\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            f"📸 *Photo Post #{post_num}*\n"
-            "💎 *Premium Quality*\n"
-            "🔥 *Formatting Preserved*\n\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+        success = (
+            f"{P('PREMIUM POST SENT')}\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+            f"{P(f'Photo Post {post_num}')}\n"
+            f"{P('Premium Quality')}\n"
+            f"{P('Formatting Preserved')}\n\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}"
         )
         
         keyboard = [
-            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_menu")],
-            [InlineKeyboardButton("🏠 Go Menu", callback_data="main_menu")],
-            [InlineKeyboardButton("📸 New Post", callback_data="start_photo")],
+            [InlineKeyboardButton(f"{P('Edit Post')}", callback_data="edit")],
+            [InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")],
+            [InlineKeyboardButton(f"{P('New Photo')}", callback_data="photo")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await update.message.reply_text(success_text, reply_markup=reply_markup)
+        await update.message.reply_text(success, reply_markup=reply_markup)
         
         context.user_data.clear()
         return ConversationHandler.END
         
     except Exception as e:
         await processing.delete()
-        await update.message.reply_text(f"❌ *Error!* Try again.")
+        await update.message.reply_text(f"{P('Error Try again')}")
         return ConversationHandler.END
 
-async def send_file_with_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def send_file_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """File + Text bhejo"""
     user_id = update.message.from_user.id
     
@@ -312,13 +326,11 @@ async def send_file_with_text(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     file_id = context.user_data['file_id']
     
-    # Post number
     if user_id not in post_counter:
         post_counter[user_id] = 0
     post_counter[user_id] += 1
     post_num = post_counter[user_id]
     
-    # Save post
     if user_id not in user_posts:
         user_posts[user_id] = {}
     user_posts[user_id][post_num] = {
@@ -328,7 +340,7 @@ async def send_file_with_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         'entities': user_entities
     }
     
-    processing = await update.message.reply_text("⚡ *Processing...*")
+    processing = await update.message.reply_text(f"{P('Processing')}")
     
     try:
         await update.message.reply_document(
@@ -339,81 +351,77 @@ async def send_file_with_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         
         await processing.delete()
         
-        success_text = (
-            "✅ **PREMIUM POST SENT!**\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            f"📄 *File Post #{post_num}*\n"
-            "💎 *Premium Quality*\n"
-            "🔥 *Formatting Preserved*\n\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+        success = (
+            f"{P('PREMIUM POST SENT')}\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+            f"{P(f'File Post {post_num}')}\n"
+            f"{P('Premium Quality')}\n"
+            f"{P('Formatting Preserved')}\n\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}"
         )
         
         keyboard = [
-            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_menu")],
-            [InlineKeyboardButton("🏠 Go Menu", callback_data="main_menu")],
-            [InlineKeyboardButton("📄 New File", callback_data="start_file")],
+            [InlineKeyboardButton(f"{P('Edit Post')}", callback_data="edit")],
+            [InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")],
+            [InlineKeyboardButton(f"{P('New File')}", callback_data="file")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await update.message.reply_text(success_text, reply_markup=reply_markup)
+        await update.message.reply_text(success, reply_markup=reply_markup)
         
         context.user_data.clear()
         return ConversationHandler.END
         
     except Exception as e:
         await processing.delete()
-        await update.message.reply_text(f"❌ *Error!* Try again.")
+        await update.message.reply_text(f"{P('Error Try again')}")
         return ConversationHandler.END
 
-async def edit_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Edit karne ke liye post number lo"""
+async def edit_post_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Edit ke liye post number lo"""
     user_id = update.message.from_user.id
     
     try:
         post_num = int(update.message.text.strip())
     except:
-        await update.message.reply_text("❌ *Send valid post number!*")
+        await update.message.reply_text(f"{P('Send valid post number')}")
         return WAITING_FOR_EDIT_NUMBER
     
     if post_num not in user_posts.get(user_id, {}):
-        await update.message.reply_text("❌ *Post not found!*")
+        await update.message.reply_text(f"{P('Post not found')}")
         return WAITING_FOR_EDIT_NUMBER
     
-    context.user_data['edit_post'] = post_num
+    context.user_data['edit_num'] = post_num
     post = user_posts[user_id][post_num]
     
     text = (
-        f"✏️ **EDITING POST #{post_num}**\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-        f"📝 *Current Text:* {post['text'][:100]}\n"
-        f"📸 *Type:* {'Photo' if post['type'] == 'photo' else 'File'}\n\n"
-        "💬 *Send new text OR*\n"
-        "🖼️ *Send new photo/file to change media*\n\n"
-        "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+        f"{P(f'EDITING POST {post_num}')}\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+        f"{P(f'Current Text {post[\"text\"][:100]}')}\n"
+        f"{P(f'Type {\"Photo\" if post[\"type\"] == \"photo\" else \"File\"}')}\n\n"
+        f"{P('Send new text or new photo or file')}\n\n"
+        f"{P('━━━━━━━━━━━━━━━━━━')}"
     )
     
-    keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="main_menu")]]
+    keyboard = [[InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(text, reply_markup=reply_markup)
     return WAITING_FOR_EDIT_TEXT
 
-async def edit_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Edit save karo"""
     user_id = update.message.from_user.id
-    post_num = context.user_data.get('edit_post')
+    post_num = context.user_data.get('edit_num')
     
     if not post_num:
-        await update.message.reply_text("❌ *Session expired!*")
         return ConversationHandler.END
     
     post = user_posts[user_id][post_num]
     
-    # Text update
     if update.message.text:
-        user_text = update.message.text
-        user_entities = []
-        
+        post['text'] = update.message.text
+        post['entities'] = []
         if update.message.entities:
             for entity in update.message.entities:
                 entity_dict = {
@@ -423,22 +431,16 @@ async def edit_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 }
                 if hasattr(entity, 'url') and entity.url:
                     entity_dict['url'] = entity.url
-                user_entities.append(entity_dict)
-        
-        post['text'] = user_text
-        post['entities'] = user_entities
+                post['entities'].append(entity_dict)
     
-    # Photo update
     elif update.message.photo:
         post['file_id'] = update.message.photo[-1].file_id
         post['type'] = 'photo'
     
-    # File update
     elif update.message.document:
         post['file_id'] = update.message.document.file_id
         post['type'] = 'file'
     
-    # Resend updated post
     try:
         if post['type'] == 'photo':
             await update.message.reply_photo(
@@ -454,23 +456,23 @@ async def edit_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         
         success = (
-            "✅ **POST UPDATED!**\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡\n\n"
-            f"✏️ *Post #{post_num} Edited*\n"
-            "💎 *Premium Quality*\n\n"
-            "⚡ ━━━━━━━━━━━━━━━━━━ ⚡"
+            f"{P('POST UPDATED')}\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}\n\n"
+            f"{P(f'Post {post_num} Edited')}\n"
+            f"{P('Premium Quality')}\n\n"
+            f"{P('━━━━━━━━━━━━━━━━━━')}"
         )
         
         keyboard = [
-            [InlineKeyboardButton("✏️ Edit Again", callback_data="edit_menu")],
-            [InlineKeyboardButton("🏠 Go Menu", callback_data="main_menu")],
+            [InlineKeyboardButton(f"{P('Edit Again')}", callback_data="edit")],
+            [InlineKeyboardButton(f"{P('Go Menu')}", callback_data="menu")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await update.message.reply_text(success, reply_markup=reply_markup)
         
-    except Exception as e:
-        await update.message.reply_text(f"❌ *Update failed!*")
+    except:
+        await update.message.reply_text(f"{P('Update failed')}")
     
     context.user_data.clear()
     return ConversationHandler.END
@@ -478,41 +480,38 @@ async def edit_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     
-    # Start
     app.add_handler(CommandHandler("start", start))
     
-    # Button handlers
-    app.add_handler(CallbackQueryHandler(button_handler, pattern="^(start_photo|start_file|main_menu|edit_menu|my_posts)$"))
-    
-    # Conversation
     conv = ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(button_handler, pattern="^(start_photo|start_file|main_menu|edit_menu|my_posts)$"),
+            CallbackQueryHandler(button_click, pattern="^(photo|file|edit|posts|menu)$"),
         ],
         states={
             WAITING_FOR_PHOTO: [
-                MessageHandler(filters.PHOTO, receive_photo),
-                CallbackQueryHandler(button_handler, pattern="^main_menu$"),
+                MessageHandler(filters.PHOTO, photo_received),
+                CallbackQueryHandler(button_click, pattern="^menu$"),
+                MessageHandler(filters.TEXT, lambda u, c: u.message.reply_text(f"{P('Please send photo')}")),
+            ],
+            WAITING_FOR_PHOTO_TEXT: [
+                MessageHandler(filters.TEXT, send_photo_post),
+                CallbackQueryHandler(button_click, pattern="^menu$"),
             ],
             WAITING_FOR_FILE: [
-                MessageHandler(filters.Document.ALL, receive_file),
-                CallbackQueryHandler(button_handler, pattern="^main_menu$"),
-            ],
-            WAITING_FOR_TEXT: [
-                MessageHandler(filters.TEXT, send_photo_with_text),
-                CallbackQueryHandler(button_handler, pattern="^main_menu$"),
+                MessageHandler(filters.Document.ALL, file_received),
+                CallbackQueryHandler(button_click, pattern="^menu$"),
+                MessageHandler(filters.TEXT, lambda u, c: u.message.reply_text(f"{P('Please send file')}")),
             ],
             WAITING_FOR_FILE_TEXT: [
-                MessageHandler(filters.TEXT, send_file_with_text),
-                CallbackQueryHandler(button_handler, pattern="^main_menu$"),
+                MessageHandler(filters.TEXT, send_file_post),
+                CallbackQueryHandler(button_click, pattern="^menu$"),
             ],
             WAITING_FOR_EDIT_NUMBER: [
-                MessageHandler(filters.TEXT, edit_select),
-                CallbackQueryHandler(button_handler, pattern="^main_menu$"),
+                MessageHandler(filters.TEXT, edit_post_number),
+                CallbackQueryHandler(button_click, pattern="^menu$"),
             ],
             WAITING_FOR_EDIT_TEXT: [
-                MessageHandler(filters.TEXT | filters.PHOTO | filters.Document.ALL, edit_save),
-                CallbackQueryHandler(button_handler, pattern="^main_menu$"),
+                MessageHandler(filters.TEXT | filters.PHOTO | filters.Document.ALL, save_edit),
+                CallbackQueryHandler(button_click, pattern="^menu$"),
             ],
         },
         fallbacks=[CommandHandler("start", start)],
@@ -520,8 +519,8 @@ def main():
     
     app.add_handler(conv)
     
-    logger.info("👑 PREMIUM BOT RUNNING!")
-    print("✅ BOT STARTED!")
+    logger.info("PREMIUM BOT RUNNING!")
+    print("BOT STARTED!")
     app.run_polling()
 
 if __name__ == '__main__':
