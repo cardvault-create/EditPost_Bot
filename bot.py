@@ -7,142 +7,141 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# DIFFERENT PACKS KI IDs - Ek ek karke test karo
 ALL_IDS = [
-    # Pack 1: Animated Stars
     ("⭐", "5248997569597122150"),
     ("⭐", "5244763718273901234"),
     ("⭐", "5379984133541992097"),
-    
-    # Pack 2: Animated Hearts  
     ("❤️", "5416178648357991643"),
-    ("❤️", "5416334710819572096"),
-    
-    # Pack 3: Animated Fire
     ("🔥", "5416406519287317059"),
-    ("🔥", "5416492956624627995"),
-    
-    # Pack 4: Animated Sparkles
     ("✨", "5416522284116819797"),
-    ("✨", "5416604905289484711"),
-    
-    # Pack 5: Animated Crown
     ("👑", "5416731769684298532"),
-    ("👑", "5248811281754033674"),
-    
-    # Pack 6: Animated Rocket
     ("🚀", "5366532108451860706"),
-    
-    # Pack 7: Diamond Pack
     ("💎", "5380111356227770863"),
     ("💎", "6244678063775289843"),
-    
-    # Pack 8: Party
     ("🎉", "5385084869486320647"),
-    ("🎉", "5386222062488657923"),
-    
-    # Pack 9: Moon
     ("🌙", "5387335851494465541"),
-    ("🌙", "5388432979870089217"),
-    
-    # Pack 10: Flower
     ("🌸", "5389552594562310150"),
-    ("🌸", "5390669217390264325"),
 ]
+
+def utf16_length(text):
+    """UTF-16 encoding mein character length nikalo"""
+    return len(text.encode('utf-16-le')) // 2
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🧪 *TESTING ALL EMOJI PACKS*\n\n"
-        "/test - Sab emojis test karo\n"
-        "Jo ANIMATED dikhe - woh WORKING!\n"
-        "Jo NORMAL dikhe - woh FAILED!"
+        "🧪 *NEW METHOD - UTF-16 LENGTH*\n\n"
+        "/test - Sab test karo\n"
+        "/single <number> - Ek test karo"
     )
 
 async def test_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Sab emojis test karo"""
+    """UTF-16 length ke saath test"""
     
-    await update.message.reply_text(f"🧪 Testing {len(ALL_IDS)} emojis...\n\nAnimated = ✅ | Normal = ❌")
+    await update.message.reply_text("🧪 Testing with UTF-16 length...")
     
     working = []
     
     for emoji_text, emoji_id in ALL_IDS:
         try:
-            text = f"{emoji_text} ID: {emoji_id[-8:]}"
+            # 🔥 UTF-16 LENGTH nikalo
+            length = utf16_length(emoji_text)
+            
+            text = f"{emoji_text} Test"
             entities = [{
                 "type": "custom_emoji",
                 "offset": 0,
-                "length": len(emoji_text),
-                "custom_emoji_id": emoji_id
-            }]
-            
-            msg = await update.message.reply_text(text=text, entities=entities)
-            
-            # Agar error nahi aaya to ID bhej di
-            # Ab user batayega animated hai ya nahi
-            await update.message.reply_text(f"👆 {emoji_text} Animated? /yes{len(working)} ya /no")
-            
-            working.append(emoji_id)
-            
-        except Exception as e:
-            await update.message.reply_text(f"❌ {emoji_text} Failed: {str(e)[:50]}")
-    
-    await update.message.reply_text(
-        f"✅ {len(working)} emojis bheje!\n\n"
-        f"Jo animated hain unke number batao!"
-    )
-
-async def test_single(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Ek ek karke test"""
-    if not context.args:
-        await update.message.reply_text("Number batao! Example: /try 5")
-        return
-    
-    try:
-        index = int(context.args[0]) - 1
-        if 0 <= index < len(ALL_IDS):
-            emoji_text, emoji_id = ALL_IDS[index]
-            
-            # Text test
-            text = f"{emoji_text} Test #{index+1}"
-            entities = [{
-                "type": "custom_emoji",
-                "offset": 0,
-                "length": len(emoji_text),
+                "length": length,  # UTF-16 length use karo
                 "custom_emoji_id": emoji_id
             }]
             
             await update.message.reply_text(text=text, entities=entities)
+            logger.info(f"✅ {emoji_text}: length={length}, id={emoji_id}")
+            working.append((emoji_text, emoji_id, length))
             
-            # Photo test
+        except Exception as e:
+            logger.warning(f"❌ {emoji_text}: {str(e)[:50]}")
+    
+    await update.message.reply_text(
+        f"✅ {len(working)}/{len(ALL_IDS)} bheje!\n\n"
+        "Jo ANIMATED dikhe uska number batao!"
+    )
+
+async def test_single(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ek emoji test with different lengths"""
+    if not context.args:
+        await update.message.reply_text("/single <number>")
+        return
+    
+    try:
+        index = int(context.args[0]) - 1
+        emoji_text, emoji_id = ALL_IDS[index]
+        
+        await update.message.reply_text(f"Testing: {emoji_text} | ID: {emoji_id}")
+        
+        # Different lengths try karo
+        for length in [1, 2, 3, 4]:
             try:
-                caption = f"{emoji_text} Photo Test"
-                entities2 = [{
+                text = f"{emoji_text} len={length}"
+                entities = [{
                     "type": "custom_emoji",
                     "offset": 0,
-                    "length": len(emoji_text),
+                    "length": length,
                     "custom_emoji_id": emoji_id
                 }]
-                
-                await update.message.reply_photo(
-                    photo="https://via.placeholder.com/100.png",
-                    caption=caption,
-                    caption_entities=entities2
-                )
-                await update.message.reply_text("👆 Text + Photo dono mein check karo!")
+                await update.message.reply_text(text=text, entities=entities)
+                await update.message.reply_text(f"✅ Length {length} bheja!")
             except Exception as e:
-                await update.message.reply_text(f"Photo test failed: {str(e)[:50]}")
-        else:
-            await update.message.reply_text(f"1 se {len(ALL_IDS)} ke beech ka number do!")
-    except ValueError:
-        await update.message.reply_text("Valid number do!")
+                await update.message.reply_text(f"❌ Length {length}: {str(e)[:80]}")
+        
+    except:
+        await update.message.reply_text("Invalid number!")
+
+async def handle_forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Forwarded message se SAHI LENGTH pakdo"""
+    msg = update.message
+    
+    if msg.entities:
+        for entity in msg.entities:
+            if entity.type == "custom_emoji":
+                emoji_id = entity.custom_emoji_id
+                emoji_length = entity.length
+                
+                emoji_text = ""
+                if msg.text:
+                    emoji_text = msg.text[entity.offset:entity.offset + emoji_length]
+                
+                # Usi length ke saath test karo
+                try:
+                    text = f"{emoji_text} Real Emoji!"
+                    entities = [{
+                        "type": "custom_emoji",
+                        "offset": 0,
+                        "length": emoji_length,
+                        "custom_emoji_id": emoji_id
+                    }]
+                    await update.message.reply_text(text=text, entities=entities)
+                    
+                    await update.message.reply_text(
+                        f"✅ *REAL EMOJI FORWARD SE!*\n\n"
+                        f"ID: `{emoji_id}`\n"
+                        f"Length: `{emoji_length}`\n"
+                        f"Text: {emoji_text}\n\n"
+                        f"Yeh animated hona chahiye!"
+                    )
+                except Exception as e:
+                    await update.message.reply_text(f"❌ Test failed: {str(e)[:80]}")
+                return
+    
+    await update.message.reply_text("❌ Emoji forward karo!")
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("test", test_all))
-    app.add_handler(CommandHandler("try", test_single))
+    app.add_handler(CommandHandler("single", test_single))
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_forward))
     
-    logger.info("🧪 Testing ALL emoji packs...")
+    logger.info("🧪 UTF-16 Length Test Bot Running!")
     app.run_polling()
 
 if __name__ == '__main__':
