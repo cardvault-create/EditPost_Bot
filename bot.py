@@ -10,42 +10,82 @@ logger = logging.getLogger(__name__)
 PREMIUM_EMOJI = "6244678063775289843"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Sirf emoji test"""
+    """Test with LENGTH = 2"""
     
-    # Test 1: Simple emoji
     text1 = "🌟"
     entities1 = [{
         "type": "custom_emoji",
         "offset": 0,
-        "length": 1,
+        "length": 2,  # 🔥 LENGTH 2
         "custom_emoji_id": PREMIUM_EMOJI
     }]
     
     try:
         await update.message.reply_text(text=text1, entities=entities1)
-        await update.message.reply_text("✅ Test 1: Emoji bhej diya - animated dikhna chahiye!")
+        await update.message.reply_text("✅ Test 1: Length 2 - Animated dikhna chahiye!")
     except Exception as e:
-        await update.message.reply_text(f"❌ Test 1 Failed: {e}")
+        await update.message.reply_text(f"❌ Test 1 Failed: {str(e)[:100]}")
 
 async def test2(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test with caption"""
-    text = "🌟 Hello"
+    """Length 3 try"""
+    text = "🌟"
     entities = [{
         "type": "custom_emoji",
         "offset": 0,
-        "length": 1,
+        "length": 3,
         "custom_emoji_id": PREMIUM_EMOJI
     }]
     
-    await update.message.reply_text(text=text, entities=entities)
-    await update.message.reply_text("Test 2 sent!")
+    try:
+        await update.message.reply_text(text=text, entities=entities)
+        await update.message.reply_text("✅ Test 2: Length 3")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Test 2: {str(e)[:100]}")
+
+async def test3(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Text + emoji"""
+    text = "🌟 Hello World"
+    entities = [{
+        "type": "custom_emoji",
+        "offset": 0,
+        "length": 2,
+        "custom_emoji_id": PREMIUM_EMOJI
+    }]
+    
+    try:
+        await update.message.reply_text(text=text, entities=entities)
+        await update.message.reply_text("✅ Test 3: Emoji + Text")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Test 3: {str(e)[:100]}")
+
+async def test_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Photo caption test"""
+    caption = "🌟 Photo Test"
+    entities = [{
+        "type": "custom_emoji",
+        "offset": 0,
+        "length": 2,
+        "custom_emoji_id": PREMIUM_EMOJI
+    }]
+    
+    try:
+        await update.message.reply_photo(
+            photo="https://via.placeholder.com/100.png",
+            caption=caption,
+            caption_entities=entities
+        )
+        await update.message.reply_text("✅ Photo test sent!")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Photo test: {str(e)[:100]}")
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("test2", test2))
+    app.add_handler(CommandHandler("test3", test3))
+    app.add_handler(CommandHandler("testphoto", test_photo))
     
-    logger.info("🧪 Simple emoji test bot running!")
+    logger.info("🧪 Testing with LENGTH=2...")
     app.run_polling()
 
 if __name__ == '__main__':
