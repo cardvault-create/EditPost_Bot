@@ -1,188 +1,148 @@
 import logging
 import os
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ⭐ WAHI ID JO US BOT MEIN KAAM KARTI HAI
-PREMIUM_EMOJI = "5380111356227770863"
-
-WAITING_FOR_MEDIA = 1
-WAITING_FOR_TEXT = 2
-
-user_data = {}
+# DIFFERENT PACKS KI IDs - Ek ek karke test karo
+ALL_IDS = [
+    # Pack 1: Animated Stars
+    ("⭐", "5248997569597122150"),
+    ("⭐", "5244763718273901234"),
+    ("⭐", "5379984133541992097"),
+    
+    # Pack 2: Animated Hearts  
+    ("❤️", "5416178648357991643"),
+    ("❤️", "5416334710819572096"),
+    
+    # Pack 3: Animated Fire
+    ("🔥", "5416406519287317059"),
+    ("🔥", "5416492956624627995"),
+    
+    # Pack 4: Animated Sparkles
+    ("✨", "5416522284116819797"),
+    ("✨", "5416604905289484711"),
+    
+    # Pack 5: Animated Crown
+    ("👑", "5416731769684298532"),
+    ("👑", "5248811281754033674"),
+    
+    # Pack 6: Animated Rocket
+    ("🚀", "5366532108451860706"),
+    
+    # Pack 7: Diamond Pack
+    ("💎", "5380111356227770863"),
+    ("💎", "6244678063775289843"),
+    
+    # Pack 8: Party
+    ("🎉", "5385084869486320647"),
+    ("🎉", "5386222062488657923"),
+    
+    # Pack 9: Moon
+    ("🌙", "5387335851494465541"),
+    ("🌙", "5388432979870089217"),
+    
+    # Pack 10: Flower
+    ("🌸", "5389552594562310150"),
+    ("🌸", "5390669217390264325"),
+]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "💎 *PREMIUM EMOJI BOT*\n\n"
-        "/send - Photo + Text\n"
-        "/file - File + Text\n"
-        "/test - Emoji test karo"
+        "🧪 *TESTING ALL EMOJI PACKS*\n\n"
+        "/test - Sab emojis test karo\n"
+        "Jo ANIMATED dikhe - woh WORKING!\n"
+        "Jo NORMAL dikhe - woh FAILED!"
     )
 
-async def test_emoji(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """BILKUL WAHI FORMAT JO US BOT MEIN HAI"""
+async def test_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sab emojis test karo"""
     
-    # 🎯 EXACT SAME: offset=0, length=2
-    text = "💎"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 2,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
+    await update.message.reply_text(f"🧪 Testing {len(ALL_IDS)} emojis...\n\nAnimated = ✅ | Normal = ❌")
     
-    await update.message.reply_text(text=text, entities=entities)
-    await update.message.reply_text("👆 Yeh animated diamond hona chahiye!")
+    working = []
+    
+    for emoji_text, emoji_id in ALL_IDS:
+        try:
+            text = f"{emoji_text} ID: {emoji_id[-8:]}"
+            entities = [{
+                "type": "custom_emoji",
+                "offset": 0,
+                "length": len(emoji_text),
+                "custom_emoji_id": emoji_id
+            }]
+            
+            msg = await update.message.reply_text(text=text, entities=entities)
+            
+            # Agar error nahi aaya to ID bhej di
+            # Ab user batayega animated hai ya nahi
+            await update.message.reply_text(f"👆 {emoji_text} Animated? /yes{len(working)} ya /no")
+            
+            working.append(emoji_id)
+            
+        except Exception as e:
+            await update.message.reply_text(f"❌ {emoji_text} Failed: {str(e)[:50]}")
+    
+    await update.message.reply_text(
+        f"✅ {len(working)} emojis bheje!\n\n"
+        f"Jo animated hain unke number batao!"
+    )
 
-async def send_photo_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    user_data[user_id] = {'type': 'photo'}
-    await update.message.reply_text("📸 Photo bhejo!")
-    return WAITING_FOR_MEDIA
-
-async def send_file_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    user_data[user_id] = {'type': 'file'}
-    await update.message.reply_text("📄 File bhejo!")
-    return WAITING_FOR_MEDIA
-
-async def receive_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    
-    if user_id not in user_data:
-        return ConversationHandler.END
-    
-    media_type = user_data[user_id]['type']
-    
-    if media_type == 'photo' and update.message.photo:
-        user_data[user_id]['file_id'] = update.message.photo[-1].file_id
-        await update.message.reply_text("✅ Photo mil gayi!\n\n💬 Ab text bhejo:")
-        return WAITING_FOR_TEXT
-    
-    elif media_type == 'file' and update.message.document:
-        user_data[user_id]['file_id'] = update.message.document.file_id
-        await update.message.reply_text("✅ File mil gayi!\n\n💬 Ab text bhejo:")
-        return WAITING_FOR_TEXT
-    
-    return WAITING_FOR_MEDIA
-
-async def receive_text_and_send(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """BILKUL SAHI TAREEKA - Wahi entity format"""
-    user_id = update.message.from_user.id
-    
-    if user_id not in user_data:
-        return ConversationHandler.END
-    
-    user_text = update.message.text or ""
-    user_entities_raw = update.message.entities or []
-    
-    media_type = user_data[user_id]['type']
-    file_id = user_data[user_id]['file_id']
-    
-    processing = await update.message.reply_text("⏳ Processing...")
-    
-    # Caption: Emoji + space + text
-    caption = f"💎 {user_text}"
-    
-    # 🎯 PREMIUM EMOJI - BILKUL SAHI FORMAT (offset:0, length:2)
-    premium_entity = {
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 2,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }
-    
-    # User entities shift karo (💎 + space = 3 characters)
-    all_entities = [premium_entity]
-    
-    for entity in user_entities_raw:
-        shifted = {
-            "type": entity.type,
-            "offset": entity.offset + 3,  # 💎(2) + space(1) = 3
-            "length": entity.length,
-        }
-        
-        # Optional fields
-        if hasattr(entity, 'url') and entity.url:
-            shifted['url'] = entity.url
-        if hasattr(entity, 'language') and entity.language:
-            shifted['language'] = entity.language
-        if hasattr(entity, 'custom_emoji_id') and entity.custom_emoji_id:
-            shifted['custom_emoji_id'] = entity.custom_emoji_id
-        
-        all_entities.append(shifted)
+async def test_single(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ek ek karke test"""
+    if not context.args:
+        await update.message.reply_text("Number batao! Example: /try 5")
+        return
     
     try:
-        if media_type == 'photo':
-            await update.message.reply_photo(
-                photo=file_id,
-                caption=caption,
-                caption_entities=all_entities
-            )
+        index = int(context.args[0]) - 1
+        if 0 <= index < len(ALL_IDS):
+            emoji_text, emoji_id = ALL_IDS[index]
+            
+            # Text test
+            text = f"{emoji_text} Test #{index+1}"
+            entities = [{
+                "type": "custom_emoji",
+                "offset": 0,
+                "length": len(emoji_text),
+                "custom_emoji_id": emoji_id
+            }]
+            
+            await update.message.reply_text(text=text, entities=entities)
+            
+            # Photo test
+            try:
+                caption = f"{emoji_text} Photo Test"
+                entities2 = [{
+                    "type": "custom_emoji",
+                    "offset": 0,
+                    "length": len(emoji_text),
+                    "custom_emoji_id": emoji_id
+                }]
+                
+                await update.message.reply_photo(
+                    photo="https://via.placeholder.com/100.png",
+                    caption=caption,
+                    caption_entities=entities2
+                )
+                await update.message.reply_text("👆 Text + Photo dono mein check karo!")
+            except Exception as e:
+                await update.message.reply_text(f"Photo test failed: {str(e)[:50]}")
         else:
-            await update.message.reply_document(
-                document=file_id,
-                caption=caption,
-                caption_entities=all_entities
-            )
-        
-        await processing.delete()
-        await update.message.reply_text("✅ Done!")
-        logger.info("✅ Sent successfully!")
-        
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        await processing.delete()
-        
-        # Fallback
-        try:
-            if media_type == 'photo':
-                await update.message.reply_photo(photo=file_id, caption=caption)
-            else:
-                await update.message.reply_document(document=file_id, caption=caption)
-            await update.message.reply_text("⚠️ Sent without emoji!")
-        except:
-            await update.message.reply_text("❌ Failed!")
-    
-    del user_data[user_id]
-    return ConversationHandler.END
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    if user_id in user_data:
-        del user_data[user_id]
-    await update.message.reply_text("❌ Cancelled!")
-    return ConversationHandler.END
+            await update.message.reply_text(f"1 se {len(ALL_IDS)} ke beech ka number do!")
+    except ValueError:
+        await update.message.reply_text("Valid number do!")
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
-    
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("test", test_emoji))
+    app.add_handler(CommandHandler("test", test_all))
+    app.add_handler(CommandHandler("try", test_single))
     
-    conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("send", send_photo_start),
-            CommandHandler("file", send_file_start),
-        ],
-        states={
-            WAITING_FOR_MEDIA: [
-                MessageHandler(filters.PHOTO | filters.Document.ALL, receive_media),
-            ],
-            WAITING_FOR_TEXT: [
-                MessageHandler(filters.TEXT, receive_text_and_send),
-            ],
-        },
-        fallbacks=[CommandHandler("cancel", cancel)],
-    )
-    
-    app.add_handler(conv)
-    
-    logger.info("💎 Premium Bot - SAHI FORMAT!")
+    logger.info("🧪 Testing ALL emoji packs...")
     app.run_polling()
 
 if __name__ == '__main__':
