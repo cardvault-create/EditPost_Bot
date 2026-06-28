@@ -8,228 +8,173 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # States
-WAITING_FOR_PHOTO = 1
-WAITING_FOR_PHOTO_TEXT = 2
-WAITING_FOR_FILE = 3
-WAITING_FOR_FILE_TEXT = 4
-WAITING_FOR_VIDEO = 5
-WAITING_FOR_VIDEO_TEXT = 6
-WAITING_FOR_EDIT_NUMBER = 7
-WAITING_FOR_EDIT_TEXT = 8
-WAITING_FOR_ADD_BUTTON_NUMBER = 9
-WAITING_FOR_BUTTON_NAME = 10
-WAITING_FOR_BUTTON_LINK = 11
-WAITING_FOR_BUTTON_POSITION = 12
-WAITING_FOR_EDIT_BUTTON_NUMBER = 13
-WAITING_FOR_EDIT_BUTTON_ACTION = 14
-WAITING_FOR_EDIT_BUTTON_NEWNAME = 15
-WAITING_FOR_EDIT_BUTTON_NEWLINK = 16
-WAITING_FOR_DELETE_BUTTON_ACTION = 17
+WAIT_PHOTO = 1
+WAIT_PHOTO_TEXT = 2
+WAIT_FILE = 3
+WAIT_FILE_TEXT = 4
+WAIT_VIDEO = 5
+WAIT_VIDEO_TEXT = 6
+WAIT_EDIT_POST_NUM = 7
+WAIT_EDIT_POST_DATA = 8
+WAIT_ADD_BTN_NUM = 9
+WAIT_BTN_POS = 10
+WAIT_BTN_NAME = 11
+WAIT_BTN_LINK = 12
+WAIT_EDIT_BTN_NUM = 13
+WAIT_EDIT_BTN_SELECT = 14
+WAIT_EDIT_BTN_NAME = 15
+WAIT_EDIT_BTN_LINK = 16
+WAIT_DEL_BTN_NUM = 17
+WAIT_DEL_BTN_SELECT = 18
 
 user_posts = {}
 post_counter = {}
 
-# 🎯 MENU TEXT & BUTTONS - SAME SIZE EVERYWHERE
 MENU_TEXT = (
-    "<b><i>WELCOME TO PREMIUM BOT</i></b>\n"
-    "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-    "<b><i>Premium Photo, File & Video Service</i></b>\n"
-    "<b><i>Bold and Italic Text Support</i></b>\n"
-    "<b><i>Edit Posts Anytime</i></b>\n"
-    "<b><i>Add, Edit & Delete Buttons</i></b>\n\n"
-    "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-    "<b><i>Select Option Below</i></b>"
+    "<b><i>✨ WELCOME TO PREMIUM BOT ✨</i></b>\n"
+    "<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+    "<b><i>📸 Photo + Text Service</i></b>\n"
+    "<b><i>📄 File + Text Service</i></b>\n"
+    "<b><i>🎬 Video + Text Service</i></b>\n"
+    "<b><i>✏️ Edit Posts Anytime</i></b>\n"
+    "<b><i>🔘 Manage Buttons Easily</i></b>\n\n"
+    "<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+    "<b><i>👇 Select Any Option Below</i></b>"
 )
 
-MENU_KEYBOARD = [
+MENU_BUTTONS = [
     [InlineKeyboardButton("📸 Photo + Text", callback_data="photo"),
      InlineKeyboardButton("📄 File + Text", callback_data="file")],
     [InlineKeyboardButton("🎬 Video + Text", callback_data="video")],
-    [InlineKeyboardButton("✏️ Edit Post", callback_data="edit"),
-     InlineKeyboardButton("📊 My Posts", callback_data="posts")],
-    [InlineKeyboardButton("➕ Add / Edit / Delete Button", callback_data="button_menu")],
-    [InlineKeyboardButton("🩵 CoNtacT - OwNer For HelP", url="https://t.me/BESTCHEAT_OWNER")],
+    [InlineKeyboardButton("✏️ Edit Post", callback_data="edit_post"),
+     InlineKeyboardButton("📊 My Posts", callback_data="my_posts")],
+    [InlineKeyboardButton("🔘 Button Manager", callback_data="btn_manager")],
+    [InlineKeyboardButton("🩵 Contact Owner For Help", url="https://t.me/BESTCHEAT_OWNER")],
 ]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    
     if user_id not in post_counter:
         post_counter[user_id] = 0
-    if user_id not in user_posts:
         user_posts[user_id] = {}
     
-    await update.message.reply_text(MENU_TEXT, reply_markup=InlineKeyboardMarkup(MENU_KEYBOARD), parse_mode='HTML')
+    await update.message.reply_text(MENU_TEXT, reply_markup=InlineKeyboardMarkup(MENU_BUTTONS), parse_mode='HTML')
 
 async def go_menu(query):
-    """SAME SIZE MENU - ALWAYS"""
-    await query.edit_message_text(MENU_TEXT, reply_markup=InlineKeyboardMarkup(MENU_KEYBOARD), parse_mode='HTML')
+    await query.edit_message_text(MENU_TEXT, reply_markup=InlineKeyboardMarkup(MENU_BUTTONS), parse_mode='HTML')
     return ConversationHandler.END
 
-async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
+    data = query.data
     
-    if query.data == "photo":
-        context.user_data['mode'] = 'photo'
-        text = "<b><i>PHOTO MODE</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Send your photo</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+    if data == "menu":
+        return await go_menu(query)
+    
+    if data in ["photo", "file", "video"]:
+        context.user_data['mode'] = data
+        names = {"photo": "📸 Photo", "file": "📄 File", "video": "🎬 Video"}
+        text = f"<b><i>{names[data]} MODE</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Please send your {data}</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
         keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return WAITING_FOR_PHOTO
+        return {"photo": WAIT_PHOTO, "file": WAIT_FILE, "video": WAIT_VIDEO}[data]
     
-    elif query.data == "file":
-        context.user_data['mode'] = 'file'
-        text = "<b><i>FILE MODE</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Send your file</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return WAITING_FOR_FILE
-    
-    elif query.data == "video":
-        context.user_data['mode'] = 'video'
-        text = "<b><i>VIDEO MODE</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Send your video</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return WAITING_FOR_VIDEO
-    
-    elif query.data == "edit":
+    elif data == "edit_post":
         if not user_posts.get(user_id):
-            text = "<b><i>No posts to edit</i></b>"
+            text = "<b><i>❌ No Posts Found!</i></b>\n\n<b><i>Create a post first using Photo/File/Video mode</i></b>"
             keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
             await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
             return ConversationHandler.END
         
-        text = "<b><i>EDIT POST</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+        text = "<b><i>✏️ EDIT POST</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Your Posts:</i></b>\n\n"
         for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
             post = user_posts[user_id][pnum]
-            ptype = post['type'].upper()
-            text += f"<b><i>Post {pnum} | {ptype}</i></b>\n{post['text'][:30]}...\n\n"
+            text += f"<b><i>📝 Post {pnum} | {post['type'].upper()}</i></b>\n<i>{post['text'][:40]}...</i>\n\n"
         
-        text += "<b><i>Send post number (Example: 1)</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+        text += "<b><i>📌 Send Post Number to Edit</i></b>\n<b><i>Example: 1</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
         keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return WAITING_FOR_EDIT_NUMBER
+        return WAIT_EDIT_POST_NUM
     
-    elif query.data == "posts":
+    elif data == "my_posts":
         if not user_posts.get(user_id):
-            text = "<b><i>No posts yet</i></b>"
+            text = "<b><i>📊 No Posts Yet!</i></b>\n\n<b><i>Start by creating a post!</i></b>"
         else:
             total = post_counter.get(user_id, 0)
-            text = f"<b><i>MY POSTS</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Total: {total}</i></b>\n\n"
+            text = f"<b><i>📊 MY POSTS</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Total Posts: {total}</i></b>\n\n"
             for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
                 post = user_posts[user_id][pnum]
-                ptype = post['type'].upper()
-                btns = len(post.get('buttons', []))
-                text += f"<b><i>Post {pnum} | {ptype} | {btns} btn</i></b>\n{post['text'][:40]}...\n\n"
-            text += "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+                btns = sum(len(row) for row in post.get('buttons', []))
+                text += f"<b><i>#{pnum} | {post['type'].upper()} | {btns} Buttons</i></b>\n<i>{post['text'][:50]}...</i>\n\n"
+            text += "<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
         
         keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         return ConversationHandler.END
     
-    elif query.data == "button_menu":
+    elif data == "btn_manager":
         if not user_posts.get(user_id):
-            text = "<b><i>No posts yet! Create a post first</i></b>"
+            text = "<b><i>❌ No Posts Found!</i></b>\n\n<b><i>Create a post first!</i></b>"
             keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
             await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
             return ConversationHandler.END
         
-        text = (
-            "<b><i>BUTTON MANAGER</i></b>\n"
-            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-            "<b><i>Select Action:</i></b>\n\n"
-            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-        )
+        text = "<b><i>🔘 BUTTON MANAGER</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>What do you want to do?</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
         keyboard = [
-            [InlineKeyboardButton("➕ Add Button", callback_data="add_btn")],
-            [InlineKeyboardButton("🔧 Edit Button", callback_data="edit_btn")],
-            [InlineKeyboardButton("🗑️ Delete Button", callback_data="delete_btn")],
+            [InlineKeyboardButton("➕ Add New Button", callback_data="add_btn")],
+            [InlineKeyboardButton("🔧 Edit Existing Button", callback_data="edit_btn")],
+            [InlineKeyboardButton("🗑️ Delete Button", callback_data="del_btn")],
             [InlineKeyboardButton("🔙 Go Menu", callback_data="menu")],
         ]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         return ConversationHandler.END
     
-    elif query.data == "add_btn":
-        return await show_add_menu(query, user_id)
-    
-    elif query.data == "edit_btn":
-        return await show_edit_menu(query, user_id)
-    
-    elif query.data == "delete_btn":
-        return await show_delete_menu(query, user_id)
-    
-    elif query.data == "menu":
-        return await go_menu(query)
+    elif data in ["add_btn", "edit_btn", "del_btn"]:
+        return await show_post_list(query, user_id, data)
 
-async def show_add_menu(query, user_id):
-    text = "<b><i>ADD BUTTON</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-    for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
-        post = user_posts[user_id][pnum]
-        ptype = post['type'].upper()
-        text += f"<b><i>Post {pnum} | {ptype}</i></b>\n{post['text'][:30]}...\n\n"
-    
-    text += "<b><i>Send post number (Example: 1)</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="button_menu")]]
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    return WAITING_FOR_ADD_BUTTON_NUMBER
-
-async def show_edit_menu(query, user_id):
+async def show_post_list(query, user_id, action):
     if not user_posts.get(user_id):
-        text = "<b><i>No posts</i></b>"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="button_menu")]]
+        text = "<b><i>❌ No Posts!</i></b>"
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="btn_manager")]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         return ConversationHandler.END
     
-    has_btns = False
-    text = "<b><i>EDIT BUTTON</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+    titles = {"add_btn": "➕ ADD BUTTON", "edit_btn": "🔧 EDIT BUTTON", "del_btn": "🗑️ DELETE BUTTON"}
+    states = {"add_btn": WAIT_ADD_BTN_NUM, "edit_btn": WAIT_EDIT_BTN_NUM, "del_btn": WAIT_DEL_BTN_NUM}
+    
+    context = None
+    if hasattr(query, 'message'):
+        context = query
+    else:
+        context = query
+    
+    if action in ["edit_btn", "del_btn"]:
+        has_btns = False
+        for pnum in user_posts.get(user_id, {}):
+            if user_posts[user_id][pnum].get('buttons'):
+                has_btns = True
+                break
+        if not has_btns:
+            text = f"<b><i>❌ No Buttons Found!</i></b>\n\n<b><i>Add buttons first using Add Button option</i></b>"
+            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="btn_manager")]]
+            await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+            return ConversationHandler.END
+    
+    text = f"<b><i>{titles[action]}</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Your Posts:</i></b>\n\n"
     for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
         post = user_posts[user_id][pnum]
-        if post.get('buttons'):
-            has_btns = True
-            text += f"<b><i>Post {pnum}:</i></b>\n"
-            for i, row in enumerate(post['buttons'], 1):
-                for btn in row:
-                    text += f"  {i}. {btn.text}\n"
-            text += "\n"
+        btns = sum(len(row) for row in post.get('buttons', []))
+        text += f"<b><i>📝 Post {pnum} | {post['type'].upper()} | {btns} Buttons</i></b>\n<i>{post['text'][:40]}...</i>\n\n"
     
-    if not has_btns:
-        text += "<b><i>No buttons found!</i></b>\n\n"
-    
-    text += "<b><i>Send post number (Example: 1)</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="button_menu")]]
+    text += f"<b><i>📌 Send Post Number</i></b>\n<b><i>Example: 1</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
+    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="btn_manager")]]
     await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    return WAITING_FOR_EDIT_BUTTON_NUMBER
-
-async def show_delete_menu(query, user_id):
-    if not user_posts.get(user_id):
-        text = "<b><i>No posts</i></b>"
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="button_menu")]]
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return ConversationHandler.END
     
-    has_btns = False
-    text = "<b><i>DELETE BUTTON</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-    for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
-        post = user_posts[user_id][pnum]
-        if post.get('buttons'):
-            has_btns = True
-            text += f"<b><i>Post {pnum}:</i></b>\n"
-            for i, row in enumerate(post['buttons'], 1):
-                for btn in row:
-                    text += f"  {i}. {btn.text}\n"
-            text += "\n"
-    
-    if not has_btns:
-        text += "<b><i>No buttons found!</i></b>\n\n"
-    
-    text += "<b><i>Send post number (Example: 1)</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="button_menu")]]
-    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    return WAITING_FOR_DELETE_BUTTON_ACTION
+    return states[action]
 
-# ============ MEDIA ============
-
-async def media_received(update: Update, context: ContextTypes.DEFAULT_TYPE, media_type):
+async def receive_media(update: Update, context: ContextTypes.DEFAULT_TYPE, media_type):
     file_id = None
     if media_type == 'photo' and update.message.photo:
         file_id = update.message.photo[-1].file_id
@@ -239,28 +184,28 @@ async def media_received(update: Update, context: ContextTypes.DEFAULT_TYPE, med
         file_id = update.message.document.file_id
     
     if not file_id:
-        await update.message.reply_text(f"<b><i>Send {media_type}</i></b>", parse_mode='HTML')
+        await update.message.reply_text(f"<b><i>❌ Please send a {media_type}!</i></b>", parse_mode='HTML')
         return None
     
     context.user_data['file_id'] = file_id
     context.user_data['type'] = media_type
     
-    text = f"<b><i>{media_type.upper()} RECEIVED</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Now send your text</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
+    text = f"<b><i>✅ {media_type.upper()} RECEIVED!</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>💬 Now send your text</i></b>\n<i>Bold & Italic formatting supported</i>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
+    keyboard = [[InlineKeyboardButton("🔙 Cancel", callback_data="menu")]]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
     return True
 
-async def photo_received(update, context):
-    result = await media_received(update, context, 'photo')
-    return WAITING_FOR_PHOTO_TEXT if result else WAITING_FOR_PHOTO
+async def photo_recv(update, context):
+    result = await receive_media(update, context, 'photo')
+    return WAIT_PHOTO_TEXT if result else WAIT_PHOTO
 
-async def file_received(update, context):
-    result = await media_received(update, context, 'file')
-    return WAITING_FOR_FILE_TEXT if result else WAITING_FOR_FILE
+async def file_recv(update, context):
+    result = await receive_media(update, context, 'file')
+    return WAIT_FILE_TEXT if result else WAIT_FILE
 
-async def video_received(update, context):
-    result = await media_received(update, context, 'video')
-    return WAITING_FOR_VIDEO_TEXT if result else WAITING_FOR_VIDEO
+async def video_recv(update, context):
+    result = await receive_media(update, context, 'video')
+    return WAIT_VIDEO_TEXT if result else WAIT_VIDEO
 
 async def send_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
@@ -269,17 +214,15 @@ async def send_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if update.message.entities:
         for entity in update.message.entities:
-            entity_dict = {"type": entity.type, "offset": entity.offset, "length": entity.length}
+            e = {"type": entity.type, "offset": entity.offset, "length": entity.length}
             if hasattr(entity, 'url') and entity.url:
-                entity_dict['url'] = entity.url
-            user_entities.append(entity_dict)
+                e['url'] = entity.url
+            user_entities.append(e)
     
     file_id = context.user_data['file_id']
     media_type = context.user_data['type']
     
-    if user_id not in post_counter:
-        post_counter[user_id] = 0
-    post_counter[user_id] += 1
+    post_counter[user_id] = post_counter.get(user_id, 0) + 1
     post_num = post_counter[user_id]
     
     if user_id not in user_posts:
@@ -293,7 +236,7 @@ async def send_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'buttons': []
     }
     
-    processing = await update.message.reply_text("<b><i>Processing...</i></b>", parse_mode='HTML')
+    processing = await update.message.reply_text("<b><i>⏳ Processing...</i></b>", parse_mode='HTML')
     
     try:
         if media_type == 'photo':
@@ -305,37 +248,34 @@ async def send_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await processing.delete()
         
-        success = f"<b><i>POST {post_num} SENT!</i></b>"
-        keyboard = [[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]
+        success = f"<b><i>✅ POST {post_num} SENT SUCCESSFULLY!</i></b>\n\n<b><i>Use Button Manager to add buttons</i></b>"
+        keyboard = [[InlineKeyboardButton("🔘 Button Manager", callback_data="btn_manager")],
+                    [InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]
         await update.message.reply_text(success, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         
-    except:
+    except Exception as e:
         await processing.delete()
-        await update.message.reply_text("<b><i>Error!</i></b>", parse_mode='HTML')
+        await update.message.reply_text(f"<b><i>❌ Error! Try again</i></b>", parse_mode='HTML')
     
     context.user_data.clear()
     return ConversationHandler.END
 
-# ============ ADD BUTTON ============
-
-async def add_button_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def add_btn_num(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     try:
         post_num = int(update.message.text.strip())
     except:
-        await update.message.reply_text("<b><i>Example: 1</i></b>", parse_mode='HTML')
-        return WAITING_FOR_ADD_BUTTON_NUMBER
+        await update.message.reply_text("<b><i>❌ Please send a number! Example: 1</i></b>", parse_mode='HTML')
+        return WAIT_ADD_BTN_NUM
     
     if post_num not in user_posts.get(user_id, {}):
-        await update.message.reply_text("<b><i>Post not found!</i></b>", parse_mode='HTML')
-        return WAITING_FOR_ADD_BUTTON_NUMBER
+        await update.message.reply_text("<b><i>❌ Post not found!</i></b>", parse_mode='HTML')
+        return WAIT_ADD_BTN_NUM
     
-    context.user_data['btn_post_num'] = post_num
+    context.user_data['btn_post'] = post_num
     post = user_posts[user_id][post_num]
     
-    buttons = post.get('buttons', [])
-    reply_markup = InlineKeyboardMarkup(buttons) if buttons else None
-    
+    reply_markup = InlineKeyboardMarkup(post.get('buttons')) if post.get('buttons') else None
     try:
         if post['type'] == 'photo':
             await update.message.reply_photo(photo=post['file_id'], caption=post['text'], caption_entities=post.get('entities'), reply_markup=reply_markup)
@@ -346,38 +286,40 @@ async def add_button_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         pass
     
-    text = "<b><i>Choose Position:</i></b>"
+    text = "<b><i>🔘 Choose Button Position:</i></b>"
     keyboard = [
-        [InlineKeyboardButton("➕ Same Line", callback_data="btn_same"),
-         InlineKeyboardButton("⤵️ New Line", callback_data="btn_new")],
-        [InlineKeyboardButton("✅ Done", callback_data="btn_done")],
-        [InlineKeyboardButton("🔙 Back", callback_data="button_menu")],
+        [InlineKeyboardButton("➕ Same Line (Side by Side)", callback_data="pos_same"),
+         InlineKeyboardButton("⤵️ New Line (Below)", callback_data="pos_new")],
+        [InlineKeyboardButton("✅ Done Adding", callback_data="pos_done")],
+        [InlineKeyboardButton("🔙 Back", callback_data="btn_manager")],
     ]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    return WAITING_FOR_BUTTON_POSITION
+    return WAIT_BTN_POS
 
-async def button_position(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def btn_position(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    if query.data == "btn_same":
+    if query.data == "pos_same":
         context.user_data['btn_pos'] = 'same'
-    elif query.data == "btn_new":
+    elif query.data == "pos_new":
         context.user_data['btn_pos'] = 'new'
-    elif query.data == "btn_done":
-        return await finish_buttons(query, context)
+    elif query.data == "pos_done":
+        context.user_data.clear()
+        await query.edit_message_text("<b><i>✅ Buttons Saved!</i></b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
+        return ConversationHandler.END
     
-    await query.edit_message_text("<b><i>Send button name</i></b>", parse_mode='HTML')
-    return WAITING_FOR_BUTTON_NAME
+    await query.edit_message_text("<b><i>📝 Send Button Name</i></b>\n<i>Example: Join Channel</i>", parse_mode='HTML')
+    return WAIT_BTN_NAME
 
-async def button_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def btn_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['btn_name'] = update.message.text
-    await update.message.reply_text("<b><i>Send button link\nExample: https://t.me/username</i></b>", parse_mode='HTML')
-    return WAITING_FOR_BUTTON_LINK
+    await update.message.reply_text("<b><i>🔗 Send Button Link</i></b>\n<i>Example: https://t.me/username</i>", parse_mode='HTML')
+    return WAIT_BTN_LINK
 
-async def button_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def btn_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    post_num = context.user_data.get('btn_post_num')
+    post_num = context.user_data.get('btn_post')
     btn_name = context.user_data.get('btn_name')
     btn_link = update.message.text.strip()
     btn_pos = context.user_data.get('btn_pos', 'new')
@@ -403,89 +345,84 @@ async def button_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif post['type'] == 'file':
             await update.message.reply_document(document=post['file_id'], caption=post['text'], caption_entities=post.get('entities'), reply_markup=reply_markup)
         
-        text = "<b><i>BUTTON ADDED!</i></b>\n\n<b><i>Add more or Done?</i></b>"
+        text = "<b><i>✅ BUTTON ADDED!</i></b>\n\n<b><i>Add more or Done?</i></b>"
         keyboard = [
-            [InlineKeyboardButton("➕ Same Line", callback_data="btn_same"),
-             InlineKeyboardButton("⤵️ New Line", callback_data="btn_new")],
-            [InlineKeyboardButton("✅ Done", callback_data="btn_done")],
+            [InlineKeyboardButton("➕ Same Line", callback_data="pos_same"),
+             InlineKeyboardButton("⤵️ New Line", callback_data="pos_new")],
+            [InlineKeyboardButton("✅ Done", callback_data="pos_done")],
         ]
         await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-        return WAITING_FOR_BUTTON_POSITION
+        return WAIT_BTN_POS
     except:
-        await update.message.reply_text("<b><i>Error</i></b>", parse_mode='HTML')
+        await update.message.reply_text("<b><i>❌ Error!</i></b>", parse_mode='HTML')
         return ConversationHandler.END
 
-async def finish_buttons(query, context):
-    await query.edit_message_text("<b><i>DONE!</i></b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
-    context.user_data.clear()
-    return ConversationHandler.END
-
-# ============ EDIT BUTTON ============
-
-async def edit_button_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def edit_btn_num(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     try:
         post_num = int(update.message.text.strip())
     except:
-        await update.message.reply_text("<b><i>Example: 1</i></b>", parse_mode='HTML')
-        return WAITING_FOR_EDIT_BUTTON_NUMBER
+        await update.message.reply_text("<b><i>❌ Example: 1</i></b>", parse_mode='HTML')
+        return WAIT_EDIT_BTN_NUM
     
     if post_num not in user_posts.get(user_id, {}) or not user_posts[user_id][post_num].get('buttons'):
-        await update.message.reply_text("<b><i>No buttons found!</i></b>", parse_mode='HTML')
-        return WAITING_FOR_EDIT_BUTTON_NUMBER
+        await update.message.reply_text("<b><i>❌ Post not found or has no buttons!</i></b>", parse_mode='HTML')
+        return WAIT_EDIT_BTN_NUM
     
-    context.user_data['edit_btn_post'] = post_num
+    context.user_data['edit_post'] = post_num
     post = user_posts[user_id][post_num]
     
-    text = "<b><i>Select button to edit</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-    btn_num = 1
+    text = "<b><i>🔧 Select Button to Edit</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+    btn_list = []
     for row in post['buttons']:
         for btn in row:
-            text += f"<b><i>{btn_num}. {btn.text}</i></b>\n"
-            btn_num += 1
+            btn_list.append(btn)
     
-    text += "\n<b><i>Send number (Example: 1)</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="button_menu")]]
+    for i, btn in enumerate(btn_list, 1):
+        text += f"<b><i>{i}. {btn.text}</i></b>\n"
+    
+    text += "\n<b><i>📌 Send Button Number</i></b>\n<b><i>Example: 1</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
+    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="btn_manager")]]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    return WAITING_FOR_EDIT_BUTTON_ACTION
+    return WAIT_EDIT_BTN_SELECT
 
-async def edit_button_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def edit_btn_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    post_num = context.user_data.get('edit_btn_post')
+    post_num = context.user_data.get('edit_post')
     
     try:
         btn_index = int(update.message.text.strip()) - 1
     except:
-        await update.message.reply_text("<b><i>Example: 1</i></b>", parse_mode='HTML')
-        return WAITING_FOR_EDIT_BUTTON_ACTION
+        await update.message.reply_text("<b><i>❌ Example: 1</i></b>", parse_mode='HTML')
+        return WAIT_EDIT_BTN_SELECT
     
     post = user_posts[user_id][post_num]
-    all_btns = []
+    btn_list = []
     for row in post['buttons']:
         for btn in row:
-            all_btns.append(btn)
+            btn_list.append(btn)
     
-    if btn_index < 0 or btn_index >= len(all_btns):
-        await update.message.reply_text("<b><i>Invalid!</i></b>", parse_mode='HTML')
-        return WAITING_FOR_EDIT_BUTTON_ACTION
+    if btn_index < 0 or btn_index >= len(btn_list):
+        await update.message.reply_text("<b><i>❌ Invalid button number!</i></b>", parse_mode='HTML')
+        return WAIT_EDIT_BTN_SELECT
     
-    context.user_data['edit_btn_index'] = btn_index
-    old_btn = all_btns[btn_index]
+    context.user_data['edit_idx'] = btn_index
+    old_btn = btn_list[btn_index]
     
-    text = f"<b><i>Editing: {old_btn.text}</i></b>\n\n<b><i>Send new name</i></b>"
+    text = f"<b><i>🔧 Editing: {old_btn.text}</i></b>\n\n<b><i>📝 Send New Button Name</i></b>"
     await update.message.reply_text(text, parse_mode='HTML')
-    return WAITING_FOR_EDIT_BUTTON_NEWNAME
+    return WAIT_EDIT_BTN_NAME
 
-async def edit_button_newname(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data['new_btn_name'] = update.message.text
-    await update.message.reply_text("<b><i>Send new link</i></b>", parse_mode='HTML')
-    return WAITING_FOR_EDIT_BUTTON_NEWLINK
+async def edit_btn_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['new_name'] = update.message.text
+    await update.message.reply_text("<b><i>🔗 Send New Button Link</i></b>", parse_mode='HTML')
+    return WAIT_EDIT_BTN_LINK
 
-async def edit_button_newlink(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def edit_btn_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    post_num = context.user_data.get('edit_btn_post')
-    btn_index = context.user_data.get('edit_btn_index')
-    new_name = context.user_data.get('new_btn_name')
+    post_num = context.user_data.get('edit_post')
+    btn_index = context.user_data.get('edit_idx')
+    new_name = context.user_data.get('new_name')
     new_link = update.message.text.strip()
     
     post = user_posts[user_id][post_num]
@@ -508,95 +445,77 @@ async def edit_button_newlink(update: Update, context: ContextTypes.DEFAULT_TYPE
     except:
         pass
     
-    await update.message.reply_text("<b><i>BUTTON UPDATED!</i></b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
+    await update.message.reply_text("<b><i>✅ BUTTON UPDATED!</i></b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
     context.user_data.clear()
     return ConversationHandler.END
 
-# ============ DELETE BUTTON ============
-
-async def delete_button_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def del_btn_num(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     try:
         post_num = int(update.message.text.strip())
     except:
-        await update.message.reply_text("<b><i>Example: 1</i></b>", parse_mode='HTML')
-        return WAITING_FOR_DELETE_BUTTON_ACTION
+        await update.message.reply_text("<b><i>❌ Example: 1</i></b>", parse_mode='HTML')
+        return WAIT_DEL_BTN_NUM
     
     if post_num not in user_posts.get(user_id, {}) or not user_posts[user_id][post_num].get('buttons'):
-        await update.message.reply_text("<b><i>No buttons!</i></b>", parse_mode='HTML')
-        return WAITING_FOR_DELETE_BUTTON_ACTION
+        await update.message.reply_text("<b><i>❌ No buttons found in this post!</i></b>", parse_mode='HTML')
+        return WAIT_DEL_BTN_NUM
     
     context.user_data['del_post'] = post_num
     post = user_posts[user_id][post_num]
     
-    text = "<b><i>DELETE BUTTON</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
-    btn_num = 1
+    text = "<b><i>🗑️ DELETE BUTTON</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>\n\n<b><i>Your Buttons:</i></b>\n\n"
+    btn_list = []
     for row in post['buttons']:
         for btn in row:
-            text += f"<b><i>{btn_num}. {btn.text}</i></b>\n"
-            btn_num += 1
+            btn_list.append(btn)
     
-    text += "\n<b><i>Send number to delete (Example: 1)</i></b>\n<b><i>Or send 'all' to delete all</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+    for i, btn in enumerate(btn_list, 1):
+        text += f"<b><i>{i}. {btn.text}</i></b>\n"
     
-    context.user_data['waiting_delete'] = True
-    await update.message.reply_text(text, parse_mode='HTML')
-    return WAITING_FOR_DELETE_BUTTON_ACTION
-
-# ============ EDIT POST ============
-
-async def edit_post_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    
-    # Check if waiting for delete
-    if context.user_data.get('waiting_delete'):
-        return await process_delete(update, context)
-    
-    try:
-        post_num = int(update.message.text.strip())
-    except:
-        await update.message.reply_text("<b><i>Example: 1</i></b>", parse_mode='HTML')
-        return WAITING_FOR_EDIT_NUMBER
-    
-    if post_num not in user_posts.get(user_id, {}):
-        await update.message.reply_text("<b><i>Post not found!</i></b>", parse_mode='HTML')
-        return WAITING_FOR_EDIT_NUMBER
-    
-    context.user_data['edit_num'] = post_num
-    text = "<b><i>Send new text or media</i></b>\n<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
-    keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
+    text += "\n<b><i>📌 Send Number to Delete</i></b>\n<b><i>Example: 1</i></b>\n<b><i>Or send 'ALL' to delete all</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
+    keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="btn_manager")]]
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    return WAITING_FOR_EDIT_TEXT
+    return WAIT_DEL_BTN_SELECT
 
-async def process_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def del_btn_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     post_num = context.user_data.get('del_post')
-    btn_input = update.message.text.strip().lower()
+    choice = update.message.text.strip().lower()
+    
+    if post_num not in user_posts.get(user_id, {}):
+        return ConversationHandler.END
+    
     post = user_posts[user_id][post_num]
     
-    if btn_input == 'all':
+    if choice == 'all':
         post['buttons'] = []
-        await update.message.reply_text("<b><i>All buttons deleted!</i></b>", parse_mode='HTML')
+        msg = "<b><i>✅ All Buttons Deleted!</i></b>"
     else:
         try:
-            btn_index = int(btn_input) - 1
-            all_btns = []
+            btn_index = int(choice) - 1
+            btn_list = []
             for row in post['buttons']:
                 for btn in row:
-                    all_btns.append(btn)
+                    btn_list.append(btn)
             
-            if 0 <= btn_index < len(all_btns):
-                count = 0
-                for row in post['buttons'][:]:
-                    for i in range(len(row)-1, -1, -1):
-                        if count == btn_index:
-                            del row[i]
-                            if not row:
-                                post['buttons'].remove(row)
-                            break
-                        count += 1
-                await update.message.reply_text("<b><i>Button deleted!</i></b>", parse_mode='HTML')
+            if btn_index < 0 or btn_index >= len(btn_list):
+                await update.message.reply_text("<b><i>❌ Invalid number!</i></b>", parse_mode='HTML')
+                return WAIT_DEL_BTN_SELECT
+            
+            count = 0
+            for row in post['buttons'][:]:
+                for i in range(len(row)-1, -1, -1):
+                    if count == btn_index:
+                        del row[i]
+                        if not row:
+                            post['buttons'].remove(row)
+                        break
+                    count += 1
+            msg = "<b><i>✅ Button Deleted!</i></b>"
         except:
-            await update.message.reply_text("<b><i>Invalid!</i></b>", parse_mode='HTML')
+            await update.message.reply_text("<b><i>❌ Error! Try again</i></b>", parse_mode='HTML')
+            return WAIT_DEL_BTN_SELECT
     
     reply_markup = InlineKeyboardMarkup(post['buttons']) if post['buttons'] else None
     try:
@@ -609,9 +528,27 @@ async def process_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         pass
     
-    await update.message.reply_text("<b><i>DONE!</i></b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
+    await update.message.reply_text(msg, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
     context.user_data.clear()
     return ConversationHandler.END
+
+async def edit_post_num(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    try:
+        post_num = int(update.message.text.strip())
+    except:
+        await update.message.reply_text("<b><i>❌ Example: 1</i></b>", parse_mode='HTML')
+        return WAIT_EDIT_POST_NUM
+    
+    if post_num not in user_posts.get(user_id, {}):
+        await update.message.reply_text("<b><i>❌ Post not found!</i></b>", parse_mode='HTML')
+        return WAIT_EDIT_POST_NUM
+    
+    context.user_data['edit_num'] = post_num
+    text = "<b><i>✏️ Send New Text or Media (Photo/Video/File)</i></b>\n\n<b><i>━━━━━━━━━━━━━━━━━━━━━━</i></b>"
+    keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
+    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+    return WAIT_EDIT_POST_DATA
 
 async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
@@ -626,10 +563,10 @@ async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         post['entities'] = []
         if update.message.entities:
             for entity in update.message.entities:
-                entity_dict = {"type": entity.type, "offset": entity.offset, "length": entity.length}
+                e = {"type": entity.type, "offset": entity.offset, "length": entity.length}
                 if hasattr(entity, 'url') and entity.url:
-                    entity_dict['url'] = entity.url
-                post['entities'].append(entity_dict)
+                    e['url'] = entity.url
+                post['entities'].append(e)
     elif update.message.photo:
         post['file_id'] = update.message.photo[-1].file_id
         post['type'] = 'photo'
@@ -641,7 +578,7 @@ async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         post['type'] = 'file'
     
     try:
-        reply_markup = InlineKeyboardMarkup(post.get('buttons', [])) if post.get('buttons') else None
+        reply_markup = InlineKeyboardMarkup(post.get('buttons')) if post.get('buttons') else None
         if post['type'] == 'photo':
             await update.message.reply_photo(photo=post['file_id'], caption=post['text'], caption_entities=post.get('entities'), reply_markup=reply_markup)
         elif post['type'] == 'video':
@@ -649,13 +586,9 @@ async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif post['type'] == 'file':
             await update.message.reply_document(document=post['file_id'], caption=post['text'], caption_entities=post.get('entities'), reply_markup=reply_markup)
         
-        await update.message.reply_text(
-            f"<b><i>Post {post_num} Updated!</i></b>",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]),
-            parse_mode='HTML'
-        )
+        await update.message.reply_text(f"<b><i>✅ Post {post_num} Updated Successfully!</i></b>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Go Menu", callback_data="menu")]]), parse_mode='HTML')
     except:
-        await update.message.reply_text("<b><i>Failed</i></b>", parse_mode='HTML')
+        await update.message.reply_text("<b><i>❌ Update Failed!</i></b>", parse_mode='HTML')
     
     context.user_data.clear()
     return ConversationHandler.END
@@ -665,34 +598,33 @@ def main():
     app.add_handler(CommandHandler("start", start))
     
     conv = ConversationHandler(
-        entry_points=[
-            CallbackQueryHandler(button_click, pattern="^(photo|file|video|edit|posts|button_menu|add_btn|edit_btn|delete_btn|menu)$"),
-        ],
+        entry_points=[CallbackQueryHandler(handle_callback)],
         states={
-            WAITING_FOR_PHOTO: [MessageHandler(filters.PHOTO, photo_received), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_PHOTO_TEXT: [MessageHandler(filters.TEXT, send_post), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_FILE: [MessageHandler(filters.Document.ALL, file_received), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_FILE_TEXT: [MessageHandler(filters.TEXT, send_post), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_VIDEO: [MessageHandler(filters.VIDEO, video_received), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_VIDEO_TEXT: [MessageHandler(filters.TEXT, send_post), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_EDIT_NUMBER: [MessageHandler(filters.TEXT, edit_post_number), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_EDIT_TEXT: [MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Document.ALL, save_edit), CallbackQueryHandler(button_click, pattern="^menu$")],
-            WAITING_FOR_ADD_BUTTON_NUMBER: [MessageHandler(filters.TEXT, add_button_number), CallbackQueryHandler(button_click, pattern="^button_menu$")],
-            WAITING_FOR_BUTTON_POSITION: [CallbackQueryHandler(button_position, pattern="^(btn_same|btn_new|btn_done)$")],
-            WAITING_FOR_BUTTON_NAME: [MessageHandler(filters.TEXT, button_name)],
-            WAITING_FOR_BUTTON_LINK: [MessageHandler(filters.TEXT, button_link)],
-            WAITING_FOR_EDIT_BUTTON_NUMBER: [MessageHandler(filters.TEXT, edit_button_number), CallbackQueryHandler(button_click, pattern="^button_menu$")],
-            WAITING_FOR_EDIT_BUTTON_ACTION: [MessageHandler(filters.TEXT, edit_button_action), CallbackQueryHandler(button_click, pattern="^button_menu$")],
-            WAITING_FOR_EDIT_BUTTON_NEWNAME: [MessageHandler(filters.TEXT, edit_button_newname)],
-            WAITING_FOR_EDIT_BUTTON_NEWLINK: [MessageHandler(filters.TEXT, edit_button_newlink)],
-            WAITING_FOR_DELETE_BUTTON_ACTION: [MessageHandler(filters.TEXT, delete_button_action), CallbackQueryHandler(button_click, pattern="^button_menu$")],
+            WAIT_PHOTO: [MessageHandler(filters.PHOTO, photo_recv), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_PHOTO_TEXT: [MessageHandler(filters.TEXT, send_post), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_FILE: [MessageHandler(filters.Document.ALL, file_recv), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_FILE_TEXT: [MessageHandler(filters.TEXT, send_post), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_VIDEO: [MessageHandler(filters.VIDEO, video_recv), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_VIDEO_TEXT: [MessageHandler(filters.TEXT, send_post), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_EDIT_POST_NUM: [MessageHandler(filters.TEXT, edit_post_num), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_EDIT_POST_DATA: [MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Document.ALL, save_edit), CallbackQueryHandler(handle_callback, pattern="^menu$")],
+            WAIT_ADD_BTN_NUM: [MessageHandler(filters.TEXT, add_btn_num), CallbackQueryHandler(handle_callback, pattern="^(btn_manager|menu)$")],
+            WAIT_BTN_POS: [CallbackQueryHandler(btn_position, pattern="^(pos_same|pos_new|pos_done)$")],
+            WAIT_BTN_NAME: [MessageHandler(filters.TEXT, btn_name)],
+            WAIT_BTN_LINK: [MessageHandler(filters.TEXT, btn_link)],
+            WAIT_EDIT_BTN_NUM: [MessageHandler(filters.TEXT, edit_btn_num), CallbackQueryHandler(handle_callback, pattern="^(btn_manager|menu)$")],
+            WAIT_EDIT_BTN_SELECT: [MessageHandler(filters.TEXT, edit_btn_select), CallbackQueryHandler(handle_callback, pattern="^(btn_manager|menu)$")],
+            WAIT_EDIT_BTN_NAME: [MessageHandler(filters.TEXT, edit_btn_name)],
+            WAIT_EDIT_BTN_LINK: [MessageHandler(filters.TEXT, edit_btn_link)],
+            WAIT_DEL_BTN_NUM: [MessageHandler(filters.TEXT, del_btn_num), CallbackQueryHandler(handle_callback, pattern="^(btn_manager|menu)$")],
+            WAIT_DEL_BTN_SELECT: [MessageHandler(filters.TEXT, del_btn_select), CallbackQueryHandler(handle_callback, pattern="^(btn_manager|menu)$")],
         },
         fallbacks=[CommandHandler("start", start)],
     )
     
     app.add_handler(conv)
-    logger.info("PREMIUM BOT RUNNING!")
-    print("BOT STARTED!")
+    logger.info("✅ PREMIUM BOT RUNNING!")
+    print("🚀 BOT STARTED!")
     app.run_polling()
 
 if __name__ == '__main__':
