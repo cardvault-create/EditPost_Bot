@@ -18,10 +18,6 @@ WAITING_FOR_EDIT_TEXT = 6
 user_posts = {}
 post_counter = {}
 
-def pt(text):
-    """Premium text - bold + italic"""
-    return f"__**{text}**__"
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     
@@ -30,165 +26,171 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in user_posts:
         user_posts[user_id] = {}
     
+    # Clean text with HTML formatting
     welcome = (
-        f"{pt('WELCOME TO PREMIUM BOT')}\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-        f"{pt('Premium Photo and File Service')}\n"
-        f"{pt('Bold and Italic Text Support')}\n"
-        f"{pt('Edit Posts Anytime')}\n"
-        f"{pt('Instant Delivery')}\n\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-        f"{pt('Select Option Below')}"
+        "<b><i>WELCOME TO PREMIUM BOT</i></b>\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+        "<b><i>Premium Photo and File Service</i></b>\n"
+        "<b><i>Bold and Italic Text Support</i></b>\n"
+        "<b><i>Edit Posts Anytime</i></b>\n"
+        "<b><i>Instant Delivery</i></b>\n\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+        "<b><i>Select Option Below</i></b>"
     )
     
     keyboard = [
-        [InlineKeyboardButton(f"{pt('Photo')} {pt('+')} {pt('File')}", callback_data="photo_file_menu")],
-        [InlineKeyboardButton(f"{pt('Edit Post')}   {pt('My Posts')}", callback_data="edit_posts_menu")],
-        [InlineKeyboardButton(f"{pt('Contact For Help')}", url="https://t.me/BESTCHEAT_OWNER")],
+        [InlineKeyboardButton("📸 Photo + Text", callback_data="photo")],
+        [InlineKeyboardButton("📄 File + Text", callback_data="file")],
+        [InlineKeyboardButton("✏️ Edit Post", callback_data="edit")],
+        [InlineKeyboardButton("📊 My Posts", callback_data="posts")],
+        [InlineKeyboardButton("🩵 Contact For Help", url="https://t.me/BESTCHEAT_OWNER")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(welcome, reply_markup=reply_markup)
+    await update.message.reply_text(welcome, reply_markup=reply_markup, parse_mode='HTML')
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
     
-    # PHOTO + FILE MENU
-    if query.data == "photo_file_menu":
+    if query.data == "photo":
+        context.user_data['mode'] = 'photo'
         text = (
-            f"{pt('SELECT MODE')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt('Choose Photo or File')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}"
+            "<b><i>PHOTO MODE</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            "<b><i>Please send your photo</i></b>\n"
+            "<b><i>High quality recommended</i></b>\n\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
-        keyboard = [
-            [InlineKeyboardButton(f"{pt('PHOTO + TEXT')}", callback_data="photo")],
-            [InlineKeyboardButton(f"{pt('FILE + TEXT')}", callback_data="file")],
-            [InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")],
-        ]
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
-        return ConversationHandler.END
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+        return WAITING_FOR_PHOTO
     
-    # EDIT + MY POSTS MENU
-    elif query.data == "edit_posts_menu":
+    elif query.data == "file":
+        context.user_data['mode'] = 'file'
+        text = (
+            "<b><i>FILE MODE</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            "<b><i>Please send your file</i></b>\n"
+            "<b><i>Any format supported</i></b>\n\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+        )
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+        return WAITING_FOR_FILE
+    
+    elif query.data == "edit":
         if not user_posts.get(user_id):
             text = (
-                f"{pt('MY POSTS')}\n"
-                f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-                f"{pt('No posts yet')}\n"
-                f"{pt('Create a post first')}\n\n"
-                f"{pt('━━━━━━━━━━━━━━━━━━')}"
+                "<b><i>EDIT POST</i></b>\n"
+                "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+                "<b><i>No posts to edit</i></b>\n"
+                "<b><i>Create a post first</i></b>\n\n"
+                "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
             )
-            keyboard = [[InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")]]
+            keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.edit_message_text(text, reply_markup=reply_markup)
+            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
             return ConversationHandler.END
         
         text = (
-            f"{pt('EDIT POST')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
+            "<b><i>EDIT POST</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
         )
         for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
             post = user_posts[user_id][pnum]
             ptype = "Photo" if post['type'] == 'photo' else "File"
-            text += f"{pt(f'Post {pnum}')} | {pt(ptype)}\n"
-            post_text = post['text'][:40]
-            text += f"{post_text}...\n\n"
+            text += f"<b><i>Post {pnum} | {ptype}</i></b>\n"
+            text += f"{post['text'][:40]}...\n\n"
         
-        text += f"{pt('Send post number to edit')}\n"
-        text += f"{pt('━━━━━━━━━━━━━━━━━━')}"
+        text += (
+            "<b><i>Send post number to edit</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+        )
         
-        keyboard = [[InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")]]
+        keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
         return WAITING_FOR_EDIT_NUMBER
     
-    # PHOTO MODE
-    elif query.data == "photo":
-        context.user_data['mode'] = 'photo'
-        text = (
-            f"{pt('PHOTO MODE')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt('Please send your photo')}\n"
-            f"{pt('High quality recommended')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}"
-        )
-        keyboard = [[InlineKeyboardButton(f"{pt('Back')}", callback_data="menu")]]
+    elif query.data == "posts":
+        if not user_posts.get(user_id):
+            text = (
+                "<b><i>MY POSTS</i></b>\n"
+                "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+                "<b><i>No posts yet</i></b>\n"
+                "<b><i>Create your first post</i></b>\n\n"
+                "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+            )
+        else:
+            total = post_counter.get(user_id, 0)
+            text = (
+                "<b><i>MY POSTS</i></b>\n"
+                "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+                f"<b><i>Total Posts: {total}</i></b>\n\n"
+            )
+            for pnum in sorted(user_posts[user_id].keys(), reverse=True)[:10]:
+                post = user_posts[user_id][pnum]
+                ptype = "Photo" if post['type'] == 'photo' else "File"
+                text += f"<b><i>Post {pnum} | {ptype}</i></b>\n"
+                text += f"{post['text'][:50]}...\n\n"
+            text += "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
+        
+        keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
-        return WAITING_FOR_PHOTO
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+        return ConversationHandler.END
     
-    # FILE MODE
-    elif query.data == "file":
-        context.user_data['mode'] = 'file'
-        text = (
-            f"{pt('FILE MODE')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt('Please send your file')}\n"
-            f"{pt('Any format supported')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}"
-        )
-        keyboard = [[InlineKeyboardButton(f"{pt('Back')}", callback_data="menu")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup)
-        return WAITING_FOR_FILE
-    
-    # MAIN MENU
     elif query.data == "menu":
         welcome = (
-            f"{pt('WELCOME TO PREMIUM BOT')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt('Premium Photo and File Service')}\n"
-            f"{pt('Bold and Italic Text Support')}\n"
-            f"{pt('Edit Posts Anytime')}\n"
-            f"{pt('Instant Delivery')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt('Select Option Below')}"
+            "<b><i>WELCOME TO PREMIUM BOT</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            "<b><i>Premium Photo and File Service</i></b>\n"
+            "<b><i>Bold and Italic Text Support</i></b>\n"
+            "<b><i>Edit Posts Anytime</i></b>\n"
+            "<b><i>Instant Delivery</i></b>\n\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            "<b><i>Select Option Below</i></b>"
         )
         keyboard = [
-            [InlineKeyboardButton(f"{pt('Photo')} {pt('+')} {pt('File')}", callback_data="photo_file_menu")],
-            [InlineKeyboardButton(f"{pt('Edit Post')}   {pt('My Posts')}", callback_data="edit_posts_menu")],
-            [InlineKeyboardButton(f"{pt('Contact For Help')}", url="https://t.me/BESTCHEAT_OWNER")],
+            [InlineKeyboardButton("📸 Photo + Text", callback_data="photo")],
+            [InlineKeyboardButton("📄 File + Text", callback_data="file")],
+            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit")],
+            [InlineKeyboardButton("📊 My Posts", callback_data="posts")],
+            [InlineKeyboardButton("🩵 Contact For Help", url="https://t.me/BESTCHEAT_OWNER")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(welcome, reply_markup=reply_markup)
+        await query.edit_message_text(welcome, reply_markup=reply_markup, parse_mode='HTML')
         return ConversationHandler.END
 
 async def photo_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    
     if not update.message.photo:
-        await update.message.reply_text(f"{pt('Please send a photo')}")
+        await update.message.reply_text("<b><i>Please send a photo</i></b>", parse_mode='HTML')
         return WAITING_FOR_PHOTO
     
     context.user_data['file_id'] = update.message.photo[-1].file_id
     context.user_data['type'] = 'photo'
     
     text = (
-        f"{pt('PHOTO RECEIVED')}\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-        f"{pt('Now send your text')}\n"
-        f"{pt('Bold and Italic supported')}\n\n"
-        f"{pt('Formatting Tips')}\n"
-        f"{pt('Use double star for Bold')}\n"
-        f"{pt('Use double underscore for Italic')}\n\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}"
+        "<b><i>PHOTO RECEIVED</i></b>\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+        "<b><i>Now send your text</i></b>\n"
+        "<b><i>Bold and Italic supported</i></b>\n\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
     )
     
-    keyboard = [[InlineKeyboardButton(f"{pt('Cancel')}", callback_data="menu")]]
+    keyboard = [[InlineKeyboardButton("🔙 Cancel", callback_data="menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(text, reply_markup=reply_markup)
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
     return WAITING_FOR_PHOTO_TEXT
 
 async def file_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    
     if not update.message.document:
-        await update.message.reply_text(f"{pt('Please send a file')}")
+        await update.message.reply_text("<b><i>Please send a file</i></b>", parse_mode='HTML')
         return WAITING_FOR_FILE
     
     context.user_data['file_id'] = update.message.document.file_id
@@ -197,23 +199,22 @@ async def file_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['type'] = 'file'
     
     text = (
-        f"{pt('FILE RECEIVED')}\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-        f"{pt(f'File {file_name}')}\n\n"
-        f"{pt('Now send your text')}\n"
-        f"{pt('Bold and Italic supported')}\n\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}"
+        "<b><i>FILE RECEIVED</i></b>\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+        f"<b><i>File: {file_name}</i></b>\n\n"
+        "<b><i>Now send your text</i></b>\n"
+        "<b><i>Bold and Italic supported</i></b>\n\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
     )
     
-    keyboard = [[InlineKeyboardButton(f"{pt('Cancel')}", callback_data="menu")]]
+    keyboard = [[InlineKeyboardButton("🔙 Cancel", callback_data="menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(text, reply_markup=reply_markup)
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
     return WAITING_FOR_FILE_TEXT
 
 async def send_photo_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    
     user_text = update.message.text or ""
     user_entities = []
     
@@ -244,7 +245,7 @@ async def send_photo_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'entities': user_entities
     }
     
-    processing = await update.message.reply_text(f"{pt('Processing')}")
+    processing = await update.message.reply_text("<b><i>Processing...</i></b>", parse_mode='HTML')
     
     try:
         await update.message.reply_photo(
@@ -256,34 +257,32 @@ async def send_photo_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await processing.delete()
         
         success = (
-            f"{pt('PREMIUM POST SENT')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt(f'Photo Post {post_num}')}\n"
-            f"{pt('Premium Quality')}\n"
-            f"{pt('Formatting Preserved')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}"
+            "<b><i>PREMIUM POST SENT</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            f"<b><i>Photo Post #{post_num}</i></b>\n"
+            "<b><i>Premium Quality</i></b>\n"
+            "<b><i>Formatting Preserved</i></b>\n\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
         
         keyboard = [
-            [InlineKeyboardButton(f"{pt('Edit Post')}", callback_data="edit_posts_menu")],
-            [InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")],
-            [InlineKeyboardButton(f"{pt('New Photo')}", callback_data="photo")],
+            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit")],
+            [InlineKeyboardButton("🏠 Go Menu", callback_data="menu")],
+            [InlineKeyboardButton("📸 New Photo", callback_data="photo")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await update.message.reply_text(success, reply_markup=reply_markup)
-        
+        await update.message.reply_text(success, reply_markup=reply_markup, parse_mode='HTML')
         context.user_data.clear()
         return ConversationHandler.END
         
     except Exception as e:
         await processing.delete()
-        await update.message.reply_text(f"{pt('Error Try again')}")
+        await update.message.reply_text("<b><i>Error! Try again.</i></b>", parse_mode='HTML')
         return ConversationHandler.END
 
 async def send_file_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    
     user_text = update.message.text or ""
     user_entities = []
     
@@ -314,7 +313,7 @@ async def send_file_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'entities': user_entities
     }
     
-    processing = await update.message.reply_text(f"{pt('Processing')}")
+    processing = await update.message.reply_text("<b><i>Processing...</i></b>", parse_mode='HTML')
     
     try:
         await update.message.reply_document(
@@ -326,29 +325,28 @@ async def send_file_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await processing.delete()
         
         success = (
-            f"{pt('PREMIUM POST SENT')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt(f'File Post {post_num}')}\n"
-            f"{pt('Premium Quality')}\n"
-            f"{pt('Formatting Preserved')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}"
+            "<b><i>PREMIUM POST SENT</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            f"<b><i>File Post #{post_num}</i></b>\n"
+            "<b><i>Premium Quality</i></b>\n"
+            "<b><i>Formatting Preserved</i></b>\n\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
         
         keyboard = [
-            [InlineKeyboardButton(f"{pt('Edit Post')}", callback_data="edit_posts_menu")],
-            [InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")],
-            [InlineKeyboardButton(f"{pt('New File')}", callback_data="file")],
+            [InlineKeyboardButton("✏️ Edit Post", callback_data="edit")],
+            [InlineKeyboardButton("🏠 Go Menu", callback_data="menu")],
+            [InlineKeyboardButton("📄 New File", callback_data="file")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await update.message.reply_text(success, reply_markup=reply_markup)
-        
+        await update.message.reply_text(success, reply_markup=reply_markup, parse_mode='HTML')
         context.user_data.clear()
         return ConversationHandler.END
         
     except Exception as e:
         await processing.delete()
-        await update.message.reply_text(f"{pt('Error Try again')}")
+        await update.message.reply_text("<b><i>Error! Try again.</i></b>", parse_mode='HTML')
         return ConversationHandler.END
 
 async def edit_post_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -357,32 +355,31 @@ async def edit_post_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         post_num = int(update.message.text.strip())
     except:
-        await update.message.reply_text(f"{pt('Send valid post number')}")
+        await update.message.reply_text("<b><i>Send valid post number</i></b>", parse_mode='HTML')
         return WAITING_FOR_EDIT_NUMBER
     
     if post_num not in user_posts.get(user_id, {}):
-        await update.message.reply_text(f"{pt('Post not found')}")
+        await update.message.reply_text("<b><i>Post not found</i></b>", parse_mode='HTML')
         return WAITING_FOR_EDIT_NUMBER
     
     context.user_data['edit_num'] = post_num
     post = user_posts[user_id][post_num]
-    
-    current_text = post['text'][:100]
     post_type = "Photo" if post['type'] == 'photo' else "File"
+    current_text = post['text'][:100]
     
     text = (
-        f"{pt(f'EDITING POST {post_num}')}\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-        f"{pt(f'Current Text {current_text}')}\n"
-        f"{pt(f'Type {post_type}')}\n\n"
-        f"{pt('Send new text or new photo or file')}\n\n"
-        f"{pt('━━━━━━━━━━━━━━━━━━')}"
+        f"<b><i>EDITING POST #{post_num}</i></b>\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+        f"<b><i>Current: {current_text}</i></b>\n"
+        f"<b><i>Type: {post_type}</i></b>\n\n"
+        "<b><i>Send new text or media</i></b>\n\n"
+        "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
     )
     
-    keyboard = [[InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")]]
+    keyboard = [[InlineKeyboardButton("🔙 Go Menu", callback_data="menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(text, reply_markup=reply_markup)
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
     return WAITING_FOR_EDIT_TEXT
 
 async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -431,23 +428,23 @@ async def save_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         
         success = (
-            f"{pt('POST UPDATED')}\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}\n\n"
-            f"{pt(f'Post {post_num} Edited')}\n"
-            f"{pt('Premium Quality')}\n\n"
-            f"{pt('━━━━━━━━━━━━━━━━━━')}"
+            "<b><i>POST UPDATED</i></b>\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>\n\n"
+            f"<b><i>Post #{post_num} Edited</i></b>\n"
+            "<b><i>Premium Quality</i></b>\n\n"
+            "<b><i>━━━━━━━━━━━━━━━━━━</i></b>"
         )
         
         keyboard = [
-            [InlineKeyboardButton(f"{pt('Edit Again')}", callback_data="edit_posts_menu")],
-            [InlineKeyboardButton(f"{pt('Go Menu')}", callback_data="menu")],
+            [InlineKeyboardButton("✏️ Edit Again", callback_data="edit")],
+            [InlineKeyboardButton("🏠 Go Menu", callback_data="menu")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await update.message.reply_text(success, reply_markup=reply_markup)
+        await update.message.reply_text(success, reply_markup=reply_markup, parse_mode='HTML')
         
     except:
-        await update.message.reply_text(f"{pt('Update failed')}")
+        await update.message.reply_text("<b><i>Update failed</i></b>", parse_mode='HTML')
     
     context.user_data.clear()
     return ConversationHandler.END
@@ -459,7 +456,7 @@ def main():
     
     conv = ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(button_click, pattern="^(photo_file_menu|edit_posts_menu|photo|file|menu)$"),
+            CallbackQueryHandler(button_click, pattern="^(photo|file|edit|posts|menu)$"),
         ],
         states={
             WAITING_FOR_PHOTO: [
