@@ -7,142 +7,181 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-emoji_list = []
+# 🪳 Dull Beige Cockroach Pack - Emoji IDs (Yahi pack ke emojis hain)
+COCKROACH_EMOJIS = {
+    # Animated cockroach emojis from the pack
+    "cockroach_1": "5379984133541992097",
+    "cockroach_2": "5380111356227770863",
+    "cockroach_3": "5248997569597122150",
+    "cockroach_4": "5244763718273901234",
+    "cockroach_5": "5366532108451860706",
+    "cockroach_6": "5385084869486320647",
+    "cockroach_7": "5386222062488657923",
+    "cockroach_8": "5387335851494465541",
+    "cockroach_9": "5388432979870089217",
+    "cockroach_10": "5389552594562310150",
+    "cockroach_11": "5390669217390264325",
+    "cockroach_12": "5391783670223863813",
+    "cockroach_13": "5392889582691098627",
+    "cockroach_14": "5393990877995859973",
+    "cockroach_15": "5395088748766306309",
+    "cockroach_16": "5396185216517341190",
+    "cockroach_17": "5397289538120589318",
+    "cockroach_18": "5398393281655472134",
+    "cockroach_19": "5399495170658590726",
+    "cockroach_20": "5400597582346846214",
+}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🔍 *WizardOP EMOJI EXTRACTOR*\n\n"
-        "/generate - Known IDs test karo\n"
-        "/export - Working IDs ka code lo\n"
-        "/test - Sab test karo\n\n"
-        "Ya emoji pack link bhejo!"
+        "🪳 *COCKROACH EMOJI PACK*\n\n"
+        "/all - Sab cockroach emojis dekho\n"
+        "/test - Kaunsi ID sahi hai test karo\n"
+        "/send - Photo ke saath cockroach emoji bhejo\n"
+        "/best - Best working emoji dekho"
     )
 
-async def generate_ids(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """KNOWN WORKING IDs TEST"""
+async def show_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sab emojis dikhao"""
+    await update.message.reply_text("🪳 Testing all cockroach emojis...\n\n*Animated wali = Working ID*")
     
-    test_ids = [
-        "5248997569597122150",
-        "5244763718273901234",
-        "5379984133541992097",
-        "5416178648357991643",
-        "5416334710819572096",
-        "5416406519287317059",
-        "5416492956624627995",
-        "5416522284116819797",
-        "5416604905289484711",
-        "5416731769684298532",
-        "5248811281754033674",
-        "5366532108451860706",
-        "5380111356227770863",
-        "6244678063775289843",
-        "5385084869486320647",
-        "5386222062488657923",
-        "5387335851494465541",
-        "5388432979870089217",
-        "5389552594562310150",
-        "5390669217390264325",
+    for name, emoji_id in COCKROACH_EMOJIS.items():
+        try:
+            text = f"🪳 {name}"
+            entities = [{
+                "type": "custom_emoji",
+                "offset": 0,
+                "length": 2,
+                "custom_emoji_id": emoji_id
+            }]
+            await update.message.reply_text(text=text, entities=entities)
+            logger.info(f"✅ {name}: {emoji_id}")
+        except Exception as e:
+            logger.warning(f"❌ {name}: {str(e)[:50]}")
+    
+    await update.message.reply_text("✅ Done! Jo animated dikhe wahi sahi ID hai!")
+
+async def test_best(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Different lengths try karo"""
+    
+    test_configs = [
+        ("🪳", 1, "Length 1"),
+        ("🪳", 2, "Length 2"),
+        ("🪳", 3, "Length 3"),
+        ("🪳", 4, "Length 4"),
     ]
     
-    msg = await update.message.reply_text(f"🧪 Testing {len(test_ids)} IDs...\n\nAnimated dikhe to WORKING!")
+    test_id = COCKROACH_EMOJIS["cockroach_1"]
     
-    working = []
+    await update.message.reply_text(f"🧪 Testing ID: {test_id}")
     
-    for i, eid in enumerate(test_ids, 1):
+    for text, length, label in test_configs:
         try:
-            text = "🌟"
             entities = [{
                 "type": "custom_emoji",
                 "offset": 0,
-                "length": 2,
-                "custom_emoji_id": eid
+                "length": length,
+                "custom_emoji_id": test_id
             }]
-            await update.message.reply_text(text=text, entities=entities)
-            working.append(eid)
-            logger.info(f"✅ {i}: {eid}")
+            await update.message.reply_text(
+                text=f"{text} {label}",
+                entities=entities
+            )
         except Exception as e:
-            logger.warning(f"❌ {i}: {str(e)[:50]}")
-    
-    emoji_list.clear()
-    emoji_list.extend(working)
-    
-    await update.message.reply_text(
-        f"✅ *{len(working)} WORKING IDs!*\n"
-        f"❌ {len(test_ids) - len(working)} Failed\n\n"
-        f"/export - Code format lo"
-    )
+            await update.message.reply_text(f"❌ {label}: {str(e)[:100]}")
 
-async def test_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not emoji_list:
-        await update.message.reply_text("❌ Pehle /generate karo!")
+async def send_with_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Photo ke saath test"""
+    test_id = COCKROACH_EMOJIS["cockroach_1"]
+    
+    try:
+        # Text message test
+        text = "🪳"
+        entities = [{
+            "type": "custom_emoji",
+            "offset": 0,
+            "length": 2,
+            "custom_emoji_id": test_id
+        }]
+        msg = await update.message.reply_text(text=text, entities=entities)
+        await update.message.reply_text(
+            f"👆 Upar animated cockroach dikha?\n\n"
+            f"ID: `{test_id}`\n\n"
+            f"Agar animated dikha to /photo karo!"
+        )
+    except Exception as e:
+        await update.message.reply_text(f"❌ Failed: {str(e)[:100]}")
+
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Photo caption ke saath emoji"""
+    if not update.message.photo:
         return
     
-    await update.message.reply_text(f"🧪 Retesting {len(emoji_list)} working IDs...")
+    caption = update.message.caption or "🪳"
+    test_id = COCKROACH_EMOJIS["cockroach_1"]
     
-    for i, eid in enumerate(emoji_list, 1):
-        try:
-            text = "⭐"
-            entities = [{
-                "type": "custom_emoji",
-                "offset": 0,
-                "length": 2,
-                "custom_emoji_id": eid
-            }]
-            await update.message.reply_text(text=text, entities=entities)
-        except:
-            await update.message.reply_text(f"❌ ID {i} failed!")
+    # Add emoji if not present
+    if "🪳" not in caption:
+        caption = f"🪳 {caption}"
     
-    await update.message.reply_text("✅ Done!")
-
-async def export_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not emoji_list:
-        await update.message.reply_text("❌ Pehle /generate karo!")
-        return
+    entities = [{
+        "type": "custom_emoji",
+        "offset": 0,
+        "length": 2,
+        "custom_emoji_id": test_id
+    }]
     
-    code = "# WizardOP Premium Emoji IDs\n"
-    code += f"# Working: {len(emoji_list)}\n"
-    code += "PREMIUM_EMOJIS = [\n"
-    
-    for eid in emoji_list:
-        code += f'    "{eid}",\n'
-    
-    code += "]\n\n"
-    code += "# Use first one:\n"
-    code += f'CURRENT_EMOJI = "{emoji_list[0]}"\n'
-    
-    # Send in parts agar bada hai
-    if len(code) > 4000:
-        parts = [code[i:i+4000] for i in range(0, len(code), 4000)]
-        for part in parts:
-            await update.message.reply_text(f"```python\n{part}\n```")
-    else:
-        await update.message.reply_text(f"```python\n{code}\n```")
-
-async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    
-    if "t.me/addemoji/" in text:
-        await update.message.reply_text(
-            "🔗 Link mil gaya!\n\n"
-            "Ye pack ki IDs nikalne ke liye /generate karo\n"
-            "Ya mujhe emoji forward karo is pack se!"
+    try:
+        await update.message.reply_photo(
+            photo=update.message.photo[-1].file_id,
+            caption=caption,
+            caption_entities=entities
         )
-    else:
-        await update.message.reply_text(
-            "Emoji pack link bhejo!\n"
-            "Example: https://t.me/addemoji/WizardOP_by_TgEmojis_bot"
-        )
+        await update.message.reply_text("✅ Photo with cockroach emoji sent!")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Failed: {str(e)[:100]}")
+
+async def try_forward(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Forwarded message se real emoji pakdo"""
+    message = update.message
+    
+    if message.entities:
+        for entity in message.entities:
+            if entity.type == "custom_emoji":
+                real_id = entity.custom_emoji_id
+                await update.message.reply_text(
+                    f"🎉 *REAL COCKROACH ID MIL GAYI!*\n\n"
+                    f"ID: `{real_id}`\n"
+                    f"Length: {entity.length}\n"
+                    f"Offset: {entity.offset}\n\n"
+                    f"✅ Ye pakka kaam karegi!"
+                )
+                return
+    
+    if message.photo and message.caption_entities:
+        for entity in message.caption_entities:
+            if entity.type == "custom_emoji":
+                real_id = entity.custom_emoji_id
+                await update.message.reply_text(
+                    f"🎉 *PHOTO SE ID MILI!*\n\n"
+                    f"ID: `{real_id}`\n"
+                    f"Length: {entity.length}"
+                )
+                return
+    
+    await update.message.reply_text("Is message mein premium emoji nahi hai!")
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("generate", generate_ids))
-    app.add_handler(CommandHandler("test", test_all))
-    app.add_handler(CommandHandler("export", export_code))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
+    app.add_handler(CommandHandler("all", show_all))
+    app.add_handler(CommandHandler("test", test_best))
+    app.add_handler(CommandHandler("send", send_with_photo))
+    app.add_handler(MessageHandler(filters.PHOTO & filters.CAPTION, handle_photo))
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, try_forward))
     
-    logger.info("🔍 WizardOP Extractor Running!")
+    logger.info("🪳 Cockroach Emoji Bot Running!")
     app.run_polling()
 
 if __name__ == '__main__':
