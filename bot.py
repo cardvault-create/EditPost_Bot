@@ -1,108 +1,66 @@
 import logging
 import os
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-PREMIUM_EMOJI = "5380111356227770863"
-
-async def test1(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test 1: Length 1"""
-    text = "🌟 Test1"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 1,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
-    await update.message.reply_text(text=text, entities=entities)
-
-async def test2(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test 2: Length 2"""
-    text = "🌟 Test2"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 2,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
-    await update.message.reply_text(text=text, entities=entities)
-
-async def test3(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test 3: Length 3"""
-    text = "🌟 Test3"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 3,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
-    await update.message.reply_text(text=text, entities=entities)
-
-async def test4(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test 4: Different emoji character"""
-    text = "⭐ Test4"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 1,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
-    await update.message.reply_text(text=text, entities=entities)
-
-async def test5(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test 5: Emoji at end"""
-    text = "Test5 🌟"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 6,
-        "length": 1,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
-    await update.message.reply_text(text=text, entities=entities)
-
-async def test_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Test photo caption"""
-    text = "🌟 Photo Caption"
-    entities = [{
-        "type": "custom_emoji",
-        "offset": 0,
-        "length": 1,
-        "custom_emoji_id": PREMIUM_EMOJI
-    }]
-    
-    # Send a simple test photo
-    await update.message.reply_photo(
-        photo="https://via.placeholder.com/100.png",
-        caption=text,
-        caption_entities=entities
-    )
+# NEW FRESH IDs - INME SE KOI TO KAAM KAREGA
+NEW_IDS = [
+    "5248997569597122150",
+    "5244763718273901234",
+    "5379984133541992097",
+    "5416178648357991643",
+    "5416334710819572096",
+    "5416406519287317059",
+    "5416492956624627995",
+    "5416522284116819797",
+    "5416604905289484711",
+    "5416731769684298532",
+]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = "🧪 TESTING ALL EMOJI IDs\n\n"
+    
+    for i, emoji_id in enumerate(NEW_IDS, 1):
+        text += f"Test{i} "
+    
+    await update.message.reply_text(text)
+
+async def test_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Sabhi IDs ko ek saath test karo"""
+    
+    for i, emoji_id in enumerate(NEW_IDS, 1):
+        try:
+            text = f"⭐ Test {i}"
+            entities = [{
+                "type": "custom_emoji",
+                "offset": 0,
+                "length": 1,
+                "custom_emoji_id": emoji_id
+            }]
+            
+            await update.message.reply_text(text=text, entities=entities)
+            logger.info(f"✅ Test {i} sent: {emoji_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Test {i} failed: {e}")
+            await update.message.reply_text(f"❌ Test {i} failed")
+    
     await update.message.reply_text(
-        "🧪 *EMOJI TEST BOT*\n\n"
-        "/test1 - Length 1\n"
-        "/test2 - Length 2\n"
-        "/test3 - Length 3\n"
-        "/test4 - Different char\n"
-        "/test5 - End position\n"
-        "/testphoto - Photo test"
+        "✅ Sab tests complete!\n\n"
+        "Jo emoji ANIMATED dikhe wo WORKING ID hai!\n"
+        "Jo NORMAL star dikhe wo FAILED ID hai!"
     )
 
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("test1", test1))
-    app.add_handler(CommandHandler("test2", test2))
-    app.add_handler(CommandHandler("test3", test3))
-    app.add_handler(CommandHandler("test4", test4))
-    app.add_handler(CommandHandler("test5", test5))
-    app.add_handler(CommandHandler("testphoto", test_photo))
+    app.add_handler(CommandHandler("test", test_all))
     
-    logger.info("🧪 Test Bot Running!")
+    logger.info("🧪 Testing all IDs...")
     app.run_polling()
 
 if __name__ == '__main__':
